@@ -191,7 +191,7 @@
       <button type="button" class="settings-action save" id="saveKeyBtn">Save Key</button>
       <button type="button" class="settings-action clear" id="clearKeyBtn">Clear</button>
     </div>
-    <p class="settings-hint">No key? Get one at <a href="https://console.anthropic.com" target="_blank" rel="noopener">console.anthropic.com</a>. ~$0.002 per analysis.</p>
+    <p class="settings-hint">No key? Get one at <a href="https://console.anthropic.com" target="_blank" rel="noopener">console.anthropic.com</a>. ~$0.012 per analysis (Sonnet 4.5).</p>
     <hr class="settings-divider">
     <div class="settings-actions">
       <button type="button" class="settings-action clear" id="clearCacheBtn">Clear Saved Photo Results</button>
@@ -230,7 +230,7 @@
         <div class="option-hint">From your library</div>
       </label>
     </div>
-    <div class="photo-tip">For best results: face the camera, hair visible, plain background, no hat or hood.</div>
+    <div class="photo-tip">For best results: face the camera straight on, hair fully visible, plain background, no hat or hood. Side-profile or full-body shots also work — they help us measure length more precisely.</div>
     <div class="photo-preview" id="preview">
       <img id="previewImg" alt="">
       <div class="photo-actions"><button type="button" class="retake-btn" id="retakeBtn">Choose a different photo</button></div>
@@ -337,14 +337,14 @@ document.addEventListener('DOMContentLoaded', function() {
   const $ = id => document.getElementById(id);
   const HOURLY = 125;
   const KEY_STORAGE = 'maisonhue_anthropic_key';
-  const CACHE_VERSION = 2; // Bumped to invalidate old cache entries missing contentClass
-  const CACHE_STORAGE = 'maisonhue_analysis_cache_v2';
+  const CACHE_VERSION = 3; // bumped — new Sonnet-based analysis schema
+  const CACHE_STORAGE = 'maisonhue_analysis_cache_v3';
   const WARN_STORAGE = 'maisonhue_inappropriate_warnings';
   const CACHE_MAX_ENTRIES = 30;
   const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-  // Clean up old cache key if present
   try { localStorage.removeItem('maisonhue_analysis_cache'); } catch(e) {}
+  try { localStorage.removeItem('maisonhue_analysis_cache_v2'); } catch(e) {}
 
   async function hashPhoto(dataUrl) {
     const enc = new TextEncoder().encode(dataUrl);
@@ -365,7 +365,6 @@ document.addEventListener('DOMContentLoaded', function() {
   function getCachedAnalysis(hash) {
     if (!hash) return null;
     const entry = loadCache()[hash];
-    // Only honor cache entries that have a contentClass (new schema)
     if (entry && entry.contentClass && entry._v === CACHE_VERSION) return entry;
     return null;
   }
@@ -375,9 +374,7 @@ document.addEventListener('DOMContentLoaded', function() {
     cache[hash] = { ...analysis, _t: Date.now(), _v: CACHE_VERSION };
     saveCache(cache);
   }
-  function clearCache() {
-    try { localStorage.removeItem(CACHE_STORAGE); } catch(e) {}
-  }
+  function clearCache() { try { localStorage.removeItem(CACHE_STORAGE); } catch(e) {} }
 
   function getWarningCount() { return parseInt(localStorage.getItem(WARN_STORAGE) || '0', 10); }
   function incrementWarning() {
@@ -539,58 +536,87 @@ document.addEventListener('DOMContentLoaded', function() {
         const c = document.createElement('canvas');
         c.width = w; c.height = h;
         c.getContext('2d').drawImage(img, 0, 0, w, h);
-        resolve(c.toDataURL('image/jpeg', 0.85));
+        resolve(c.toDataURL('image/jpeg', 0.92));
       };
       img.src = dataUrl;
     });
   }
 
   async function analyzeWithClaude(dataUrl, apiKey) {
-    const downscaled = await downscaleImage(dataUrl, 1024);
+    // Higher-res image for Sonnet — it can use the extra detail
+    const downscaled = await downscaleImage(dataUrl, 1568);
     const base64 = downscaled.split(',')[1];
-    const prompt = `You are analyzing a photo for a women's-only hair color salon pricing app. Be deterministic and consistent: the same photo must always produce the same answer. Respond with ONLY a JSON object — no markdown, no preamble, no code fences.
+
+    const prompt = `You are a professional hair stylist's AI assistant performing a precise visual hair assessment for a women's-only color salon. Accuracy directly determines the customer's quoted price, so be careful and methodical.
+
+Respond with ONLY a single JSON object — no preamble, no markdown, no code fences.
 
 Schema:
 {
   "contentClass": "ok_hair" | "non_hair_object" | "inappropriate" | "explicit",
   "subject": "woman" | "man" | "child" | "no_person" | "unclear",
-  "objectName": "short noun phrase describing the main subject if not hair — e.g. 'a golden retriever', 'a pepperoni pizza', 'a parked car', 'a bowl of soup'. Empty string if showing a person.",
+  "objectName": "short noun phrase if the photo isn't hair (e.g. 'a tabby cat', 'a slice of pizza'). Empty string if it shows a person.",
+  "reasoning": "ONE sentence describing what landmarks you used: where the hairline starts, where the hair ends relative to chin/shoulders/back, and the density cues you observed.",
   "lengthLabel": "Short" | "Medium" | "Long" | "Extra Long",
   "densityLabel": "Fine" | "Medium" | "Thick",
   "faceVisible": boolean,
   "confidence": "high" | "medium" | "low",
-  "notes": "one short sentence describing what you see"
+  "notes": "one short sentence describing what you see (used as a customer-facing note)"
 }
 
-CRITICAL — contentClass is the most important field. Decide it FIRST:
-- "non_hair_object": photo shows an animal, food item, vehicle, landscape, building, screenshot, meme, drawing, cartoon, painting, or any inanimate object — basically ANYTHING that is not a real person whose hair we can quote. If you see a cat, a pizza, a car, a landscape, ANYTHING that isn't a real person's head and hair, USE THIS.
-- "inappropriate": suggestive content, partial undress, lingerie, swimwear in a sexually-posed way, gratuitously revealing clothing, or sexually suggestive poses — NOT explicit nudity, but inappropriate for a professional salon quote app.
-- "explicit": full nudity, exposed genitalia, exposed nipples, sexual acts, or pornographic content.
-- "ok_hair": photo clearly shows a real person whose hair can be assessed — head, face, and hair are reasonably visible AND the subject is appropriately dressed. ONLY use this when none of the above apply.
+=== CONTENT CLASS — decide this FIRST ===
+- "non_hair_object": animal, food, vehicle, landscape, building, screenshot, meme, drawing, cartoon, painting, or any object that isn't a real person whose hair we can quote. Anything that isn't a real human head and hair → USE THIS.
+- "inappropriate": suggestive, partial undress, lingerie, swimwear in sexual poses, gratuitously revealing clothing, or sexual poses. NOT explicit nudity but inappropriate for a salon quote app.
+- "explicit": full nudity, exposed genitalia, exposed nipples, sexual acts, or pornography.
+- "ok_hair": real person, hair reasonably visible, appropriately dressed. ONLY use when none of the above apply.
 
-If contentClass is "non_hair_object", set "objectName" to a short, friendly noun phrase describing what the photo actually shows (e.g. "a tabby cat", "a slice of cheese pizza", "a sunset over the ocean", "a screenshot of a text message", "a red sports car"). Be specific and observational.
+If non_hair_object: fill objectName with a specific friendly noun phrase. Otherwise leave it empty.
 
-Subject (only meaningful when contentClass = "ok_hair"):
-- "woman": adult woman (18+) — based on visible visual cues only
-- "man": adult man (18+)
-- "child": person who appears under 18
-- "no_person": no person in the photo
-- "unclear": cannot tell
+=== LENGTH MEASUREMENT (only when contentClass = "ok_hair") ===
 
-Length definitions — apply strictly using the face/jawline as the reference anchor:
-- "Short": hair ends at chin or higher (above the jawline)
-- "Medium": hair ends between the neck and the shoulders
-- "Long": hair ends below the shoulders down to the mid-back
-- "Extra Long": hair ends past the mid-back
+Anchor points on the body, from top to bottom:
+1. CHIN — bottom of the jaw
+2. NECK — between jawline and where the neck meets the shoulders (collarbone area)
+3. SHOULDERS — top of the shoulders / collarbone line
+4. MID-BACK — roughly the bra-strap line on a woman, halfway down the back
 
-When borderline between two length categories, choose the SHORTER. Always.
+Categories:
+- "Short" — the lowest tips of the hair end AT THE CHIN OR HIGHER (above the jawline). Pixie cuts, bobs cut at the jaw, ear-length cuts.
+- "Medium" — the lowest tips of the hair end BETWEEN THE NECK AND THE SHOULDERS. Lobs (long bobs), collarbone-length cuts.
+- "Long" — the lowest tips of the hair end BELOW THE SHOULDERS, down to and including the MID-BACK. Standard "long hair" — past the shoulders but not past mid-back.
+- "Extra Long" — the lowest tips of the hair end PAST THE MID-BACK. Waist-length, hip-length, or longer.
 
-Density definitions:
-- "Fine": thin or sparse strands, scalp may be partially visible
-- "Medium": average thickness and volume
-- "Thick": dense, voluminous, lots of strands, no scalp visible
+CRITICAL RULES for length:
+1. Measure to the LOWEST tips of the hair — not the bulk, not the average. Find where the longest visible strands end.
+2. If hair is tied up, in a bun, in a ponytail, or partially obscured: estimate where it would fall when down. State this assumption in "reasoning" and lower confidence to "medium".
+3. If hair is wet, slicked back, or extended downward by gravity in a way that exaggerates length, mentally adjust.
+4. If the photo is cropped above where the hair ends (e.g. close-up of just the face, you can't see the ends): infer from visible portion, lower confidence to "medium" or "low", note this in "reasoning".
+5. ALWAYS prefer the SHORTER category when borderline between two — this protects the customer from being overcharged.
+6. Curly, coily, or kinky hair: assess length as it appears when stretched/relaxed, NOT in its curled state. A bob on tightly coiled hair may look short but stretches to medium — judge generously toward shorter.
 
-Err on the side of caution: between "inappropriate" and "explicit", choose "inappropriate". Between "ok_hair" and "inappropriate", if the person is in normal everyday or salon-appropriate clothing, choose "ok_hair".`;
+=== DENSITY MEASUREMENT ===
+
+Categories:
+- "Fine" — thin or sparse strands; scalp may be partially visible through the hair; thin ponytail diameter; hair appears wispy or see-through near the ends; low overall volume.
+- "Medium" — average thickness; scalp not visible through the hair; normal ponytail diameter; healthy, full-looking but not voluminous.
+- "Thick" — dense, voluminous, lots of strands; no scalp visible anywhere; large ponytail diameter; hair appears full and heavy; if curly/coily, the curls have substantial body.
+
+Density cues to look for:
+- How much scalp shows at the part line (lots = Fine, none = Thick)
+- Overall silhouette volume relative to the head/face
+- Visible bulk of any ponytail, braid, or gathered section
+- How light passes through it (fine hair is more translucent at the edges)
+
+When borderline, choose the LOWER density (Fine over Medium, Medium over Thick) — again, protects the customer from being overcharged.
+
+=== FINAL CHECK ===
+Before responding, ask yourself:
+1. Did I look at the LOWEST tips of the hair, not just the bulk?
+2. Did I anchor against actual body landmarks (chin, neck, shoulders, mid-back), not just rough "long vs short"?
+3. If borderline, did I pick the shorter length and the lower density?
+4. Does my "reasoning" field actually explain what I observed?
+
+Err on the side of caution: between "inappropriate" and "explicit", choose "inappropriate". Between "ok_hair" and "inappropriate" with normal clothing, choose "ok_hair".`;
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -601,8 +627,8 @@ Err on the side of caution: between "inappropriate" and "explicit", choose "inap
         'anthropic-dangerous-direct-browser-access': 'true',
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 400,
+        model: 'claude-sonnet-4-5',
+        max_tokens: 600,
         temperature: 0,
         messages: [{
           role: 'user',
@@ -628,6 +654,7 @@ Err on the side of caution: between "inappropriate" and "explicit", choose "inap
       contentClass,
       subject,
       objectName: parsed.objectName || '',
+      reasoning: parsed.reasoning || '',
       lengthLabel: parsed.lengthLabel,
       densityLabel: parsed.densityLabel,
       faceVisible: parsed.faceVisible,
@@ -694,12 +721,12 @@ Err on the side of caution: between "inappropriate" and "explicit", choose "inap
   }
 
   const STAGES = [
-    { label:'Initializing vision model…',     detail:'step 1 of 6', pct:8,  ms:550 },
-    { label:'Locating the face & hairline…',  detail:'step 2 of 6', pct:25, ms:700 },
-    { label:'Measuring length & shape…',      detail:'step 3 of 6', pct:45, ms:850 },
-    { label:'Reading density and texture…',   detail:'step 4 of 6', pct:65, ms:850 },
-    { label:'Estimating color volume needed…',detail:'step 5 of 6', pct:85, ms:800 },
-    { label:'Pricing your service…',          detail:'step 6 of 6', pct:100,ms:700 },
+    { label:'Initializing vision model…',     detail:'step 1 of 6', pct:8,  ms:600 },
+    { label:'Locating the face & hairline…',  detail:'step 2 of 6', pct:25, ms:750 },
+    { label:'Measuring length & shape…',      detail:'step 3 of 6', pct:45, ms:900 },
+    { label:'Reading density and texture…',   detail:'step 4 of 6', pct:65, ms:900 },
+    { label:'Estimating color volume needed…',detail:'step 5 of 6', pct:85, ms:850 },
+    { label:'Pricing your service…',          detail:'step 6 of 6', pct:100,ms:750 },
   ];
   const CACHED_STAGES = [
     { label:'Recalling your previous analysis…', detail:'cached result',  pct:40, ms:500 },
@@ -739,7 +766,7 @@ Err on the side of caution: between "inappropriate" and "explicit", choose "inap
       badge.textContent = '✦ Saved result · same photo, same quote';
       badge.className = 'ai-badge cached';
     } else if (a.source === 'claude') {
-      badge.textContent = '✦ Claude Vision · ' + (a.confidence || 'high') + ' confidence';
+      badge.textContent = '✦ Claude Sonnet · ' + (a.confidence || 'high') + ' confidence';
       badge.className = 'ai-badge vision';
     } else {
       badge.textContent = 'Local detection · low accuracy';
@@ -912,7 +939,6 @@ Err on the side of caution: between "inappropriate" and "explicit", choose "inap
     }
 
     if (a.contentClass === 'inappropriate') {
-      // Only increment warnings for fresh detections, not cached ones
       const warningCount = fromCache ? Math.max(1, getWarningCount()) : incrementWarning();
       if (warningCount >= 3) {
         triggerBan();
