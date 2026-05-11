@@ -142,6 +142,12 @@
     color: var(--rose-deep); cursor: pointer; padding: 6px 14px;
     letter-spacing: 0.04em; font-weight: 500;
   }
+  .photo-tip {
+    margin-top: 14px; padding: 12px 14px;
+    background: var(--cream-soft); border-left: 3px solid var(--rose);
+    border-radius: 8px; font-size: 12.5px; color: var(--mocha-soft);
+    font-family: 'Fraunces', serif; font-style: italic; line-height: 1.5;
+  }
   .analyzing { text-align: center; padding: 32px 16px; }
   .ripple {
     width: 80px; height: 80px; margin: 0 auto 20px;
@@ -167,6 +173,32 @@
   .finding-row span:last-child {
     font-weight: 500; font-family: 'Fraunces', serif; font-style: italic;
   }
+  .adjust-section {
+    margin-top: 16px; padding-top: 16px;
+    border-top: 1px dashed var(--line-soft);
+  }
+  .adjust-label {
+    font-size: 12px; color: var(--mocha-mute); margin-bottom: 10px;
+    font-style: italic; font-family: 'Fraunces', serif; text-align: center;
+  }
+  .length-chips {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  }
+  .chip {
+    background: var(--cream-soft); border: 1px solid var(--line);
+    border-radius: 12px; padding: 10px 8px;
+    font-family: 'Manrope', sans-serif; font-size: 13px; font-weight: 500;
+    color: var(--mocha); cursor: pointer; transition: all 0.2s ease;
+    text-align: center; line-height: 1.3;
+  }
+  .chip small {
+    display: block; font-size: 10px; color: var(--mocha-mute);
+    margin-top: 2px; font-weight: 400;
+  }
+  .chip.active {
+    background: var(--rose-deep); color: white; border-color: var(--rose-deep);
+  }
+  .chip.active small { color: rgba(255,255,255,0.85); }
   .quote-box {
     background: var(--mocha); color: var(--cream);
     border-radius: 20px; padding: 28px 24px; margin-bottom: 18px;
@@ -303,6 +335,9 @@
         <div class="option-hint">From your library</div>
       </label>
     </div>
+    <div class="photo-tip">
+      For best results: face the camera, hair visible, plain background, no hat or hood.
+    </div>
     <div class="photo-preview" id="preview">
       <img id="previewImg" alt="">
       <div class="photo-actions">
@@ -324,6 +359,15 @@
       <div class="finding-row"><span>Density / thickness</span><span id="fDensity">—</span></div>
       <div class="finding-row"><span>Extra color needed</span><span id="fOz">—</span></div>
       <div class="finding-row" id="fTimeRow"><span>Time-based adjustment</span><span id="fTime">—</span></div>
+      <div class="adjust-section">
+        <div class="adjust-label">Not quite right? Tap to adjust:</div>
+        <div class="length-chips" id="lengthChips">
+          <button type="button" class="chip" data-length="Short">Short<small>chin or shorter</small></button>
+          <button type="button" class="chip" data-length="Medium">Medium<small>neck to shoulder</small></button>
+          <button type="button" class="chip" data-length="Long">Long<small>shoulder to mid-back</small></button>
+          <button type="button" class="chip" data-length="Extra Long">Extra Long<small>past mid-back</small></button>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -356,7 +400,7 @@ document.addEventListener('DOMContentLoaded', function() {
     { id:'allover',     name:'All-Over Permanent Color',       desc:'Full single-process color',                price:125 },
     { id:'full-hi',     name:'Full Highlights',                desc:'Foils throughout · time-based by length',  price:250, timeBased:true },
     { id:'full-color',  name:'Full Highlights + All-Over',     desc:'Highlights combined with all-over color',  price:300, timeBased:true },
-    { id:'part-hi',     name:'Partial Highlights · Basic',     desc:'Foils around the face & crown',            price:185, timeBased:true },
+    { id:'part-hi',     name:'Partial Highlights · Basic',     desc:'Foils around the face & crown · capped at 2.5 hr', price:185 },
     { id:'low',         name:'Lowlights Added',                desc:'Depth woven in to balance lightness',      price:45 },
     { id:'glaze-cut',   name:'All-Over Glaze with Cut',        desc:'Toner + finished haircut',                 price:185 },
     { id:'short-glaze', name:'Short Hair Clear Glaze + Cut',   desc:'Clear shine glaze + finished haircut',     price:130 },
@@ -473,63 +517,92 @@ document.addEventListener('DOMContentLoaded', function() {
     $('nextBtn').disabled = true;
   });
 
+  // Face-anchored hair length analysis
   function analyzePhoto(dataUrl) {
     return new Promise(resolve => {
       const img = new Image();
       img.onload = () => {
-        const W = 120, H = Math.round(120 * (img.height/img.width));
+        const W = 160, H = Math.round(160 * (img.height/img.width));
         const c = document.createElement('canvas');
         c.width = W; c.height = H;
         const ctx = c.getContext('2d');
         ctx.drawImage(img, 0, 0, W, H);
         const data = ctx.getImageData(0, 0, W, H).data;
+
+        // Pass 1: find skin (face) bounding box + dark (hair) pixels
+        let skinTop = H, skinBottom = -1, skinLeft = W, skinRight = -1, skinCount = 0;
         let darkPx = 0, totalPx = 0, lastDarkRow = 0;
+        const isSkin = (r,g,b) =>
+          r > 95 && g > 40 && b > 20 &&
+          Math.max(r,g,b) - Math.min(r,g,b) > 15 &&
+          Math.abs(r - g) > 15 && r > g && r > b;
+
         for (let y = 0; y < H; y++) {
           for (let x = 0; x < W; x++) {
             const i = (y*W + x)*4;
-            const lum = data[i]*0.299 + data[i+1]*0.587 + data[i+2]*0.114;
+            const r = data[i], g = data[i+1], b = data[i+2];
+            const lum = r*0.299 + g*0.587 + b*0.114;
             totalPx++;
-            if (lum < 110) { darkPx++; lastDarkRow = Math.max(lastDarkRow, y); }
+            if (lum < 110) { darkPx++; if (y > lastDarkRow) lastDarkRow = y; }
+            if (isSkin(r,g,b)) {
+              skinCount++;
+              if (y < skinTop) skinTop = y;
+              if (y > skinBottom) skinBottom = y;
+              if (x < skinLeft) skinLeft = x;
+              if (x > skinRight) skinRight = x;
+            }
           }
         }
-        const darkRatio = darkPx/totalPx;
-        const lengthRatio = lastDarkRow/H;
+
+        const darkRatio = darkPx / totalPx;
         let lengthLabel;
-        if (lengthRatio < 0.45)      lengthLabel = 'Short';
-        else if (lengthRatio < 0.65) lengthLabel = 'Medium';
-        else if (lengthRatio < 0.82) lengthLabel = 'Long';
-        else                         lengthLabel = 'Extra Long';
+        const faceDetected = skinCount > totalPx * 0.015;
+
+        if (faceDetected) {
+          // Anchor to face height (forehead to chin)
+          const faceHeight = Math.max(1, skinBottom - skinTop);
+          const hairExtension = Math.max(0, lastDarkRow - skinBottom);
+          const heightsBeyondChin = hairExtension / faceHeight;
+          // Reference proportions:
+          //   chin → shoulder ≈ 0.7-1.0 face heights
+          //   chin → mid-back ≈ 2.0-2.5 face heights
+          if (heightsBeyondChin < 0.15)      lengthLabel = 'Short';
+          else if (heightsBeyondChin < 1.0)  lengthLabel = 'Medium';
+          else if (heightsBeyondChin < 2.5)  lengthLabel = 'Long';
+          else                               lengthLabel = 'Extra Long';
+        } else {
+          // Fallback: use whole-image proportion
+          const lengthRatio = lastDarkRow / H;
+          if (lengthRatio < 0.40)      lengthLabel = 'Short';
+          else if (lengthRatio < 0.60) lengthLabel = 'Medium';
+          else if (lengthRatio < 0.80) lengthLabel = 'Long';
+          else                         lengthLabel = 'Extra Long';
+        }
+
         let densityLabel;
         if (darkRatio < 0.18)      densityLabel = 'Fine';
         else if (darkRatio < 0.32) densityLabel = 'Medium';
         else                       densityLabel = 'Thick';
-        resolve({ lengthLabel, densityLabel });
+
+        resolve({ lengthLabel, densityLabel, faceDetected });
       };
       img.src = dataUrl;
     });
   }
 
   const ANALYZE_STEPS = [
-    'Detecting hair region…',
-    'Measuring length & extent…',
+    'Detecting face & hair region…',
+    'Measuring face proportions…',
+    'Estimating hair length…',
     'Sampling density & thickness…',
-    'Estimating color volume…',
     'Calculating adjustments…',
   ];
 
-  async function runAnalysis() {
-    $('analyzingBlock').style.display = 'block';
-    $('findings').style.display = 'none';
-    $('nextBtn').disabled = true;
-    for (let i = 0; i < ANALYZE_STEPS.length; i++) {
-      $('analyzeStep').textContent = ANALYZE_STEPS[i];
-      await new Promise(r => setTimeout(r, 550));
-    }
-    const result = await analyzePhoto(state.photo);
-    state.analysis = result;
+  function updateFindings() {
+    const a = state.analysis;
     const adj = calcAdjustments();
-    $('fLength').textContent = result.lengthLabel;
-    $('fDensity').textContent = result.densityLabel;
+    $('fLength').textContent = a.lengthLabel;
+    $('fDensity').textContent = a.densityLabel;
     $('fOz').textContent = adj.extraOz === 0
       ? 'None needed'
       : `+${adj.extraOz} oz · ${fmt(adj.extraCost)}`;
@@ -541,10 +614,33 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
       $('fTimeRow').style.display = 'none';
     }
+    document.querySelectorAll('.chip').forEach(c => {
+      c.classList.toggle('active', c.dataset.length === a.lengthLabel);
+    });
+  }
+
+  async function runAnalysis() {
+    $('analyzingBlock').style.display = 'block';
+    $('findings').style.display = 'none';
+    $('nextBtn').disabled = true;
+    for (let i = 0; i < ANALYZE_STEPS.length; i++) {
+      $('analyzeStep').textContent = ANALYZE_STEPS[i];
+      await new Promise(r => setTimeout(r, 550));
+    }
+    state.analysis = await analyzePhoto(state.photo);
+    updateFindings();
     $('analyzingBlock').style.display = 'none';
     $('findings').style.display = 'block';
     $('nextBtn').disabled = false;
   }
+
+  document.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', function() {
+      if (!state.analysis) return;
+      state.analysis.lengthLabel = chip.dataset.length;
+      updateFindings();
+    });
+  });
 
   function renderQuote() {
     const rows = [];
