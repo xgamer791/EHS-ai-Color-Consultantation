@@ -101,24 +101,30 @@
     border-right: 2px solid white; border-bottom: 2px solid white;
     transform: rotate(45deg) translate(-1px, -1px);
   }
-  .upload-zone {
+  .photo-options {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  }
+  .photo-option {
     border: 1.5px dashed var(--rose); border-radius: 18px;
-    padding: 40px 20px; text-align: center; background: var(--cream-soft);
+    padding: 26px 14px; text-align: center; background: var(--cream-soft);
     transition: all 0.25s ease; cursor: pointer; position: relative;
     overflow: hidden; display: block;
   }
-  .upload-zone:hover { background: var(--paper); border-color: var(--rose-deep); }
-  .upload-zone input[type=file] {
+  .photo-option:active { transform: scale(0.98); }
+  .photo-option:hover { background: var(--paper); border-color: var(--rose-deep); }
+  .photo-option input[type=file] {
     position: absolute; inset: 0; opacity: 0; cursor: pointer;
+    width: 100%; height: 100%;
   }
-  .upload-icon {
-    width: 56px; height: 56px; margin: 0 auto 16px; border-radius: 50%;
+  .option-icon {
+    width: 48px; height: 48px; margin: 0 auto 12px; border-radius: 50%;
     background: var(--paper); border: 1px solid var(--line);
     display: flex; align-items: center; justify-content: center;
-    font-family: 'Fraunces', serif; font-size: 24px; color: var(--rose-deep);
+    color: var(--rose-deep);
   }
-  .upload-title { font-family: 'Fraunces', serif; font-size: 18px; margin-bottom: 4px; }
-  .upload-hint { font-size: 13px; color: var(--mocha-mute); }
+  .option-icon svg { width: 22px; height: 22px; }
+  .option-title { font-family: 'Fraunces', serif; font-size: 16px; margin-bottom: 2px; }
+  .option-hint { font-size: 11.5px; color: var(--mocha-mute); }
   .photo-preview {
     margin-top: 18px; border-radius: 18px; overflow: hidden;
     background: var(--paper); border: 1px solid var(--line);
@@ -126,6 +132,16 @@
   }
   .photo-preview.shown { display: block; }
   .photo-preview img { width: 100%; display: block; }
+  .photo-actions {
+    display: flex; justify-content: center; padding: 12px;
+    border-top: 1px solid var(--line-soft); background: var(--cream-soft);
+  }
+  .retake-btn {
+    background: transparent; border: none;
+    font-family: 'Manrope', sans-serif; font-size: 13px;
+    color: var(--rose-deep); cursor: pointer; padding: 6px 14px;
+    letter-spacing: 0.04em; font-weight: 500;
+  }
   .analyzing { text-align: center; padding: 32px 16px; }
   .ripple {
     width: 80px; height: 80px; margin: 0 auto 20px;
@@ -247,40 +263,56 @@
   </header>
 
   <div class="progress" id="progress">
-    <span class="active"></span><span></span><span></span><span></span><span></span>
+    <span class="active"></span><span></span><span></span><span></span>
   </div>
 
   <section class="step active" data-step="1">
     <div class="running-total"><span class="pulse"></span>Running estimate · <strong id="runAmt1">$0</strong></div>
     <div class="step-eyebrow">Step One</div>
     <h2 class="step-title">Choose your <em>service</em></h2>
-    <p class="step-desc">Select one or more main services. Prices shown are starting rates.</p>
+    <p class="step-desc">Select one or more services. Prices shown are starting rates.</p>
     <div class="card-list" id="services"></div>
   </section>
 
   <section class="step" data-step="2">
-    <div class="running-total"><span class="pulse"></span>Running estimate · <strong id="runAmt2">$0</strong></div>
     <div class="step-eyebrow">Step Two</div>
-    <h2 class="step-title">Add the <em>finishing touches</em></h2>
-    <p class="step-desc">Optional add-ons — skip if none apply.</p>
-    <div class="card-list" id="addons"></div>
+    <h2 class="step-title">Show us your <em>hair</em></h2>
+    <p class="step-desc">A clear photo helps our AI estimate length, density, and color volume — no need to guess.</p>
+    <div class="photo-options" id="photoOptions">
+      <label class="photo-option">
+        <input type="file" id="cameraInput" accept="image/*" capture="user">
+        <div class="option-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+            <circle cx="12" cy="13" r="4"/>
+          </svg>
+        </div>
+        <div class="option-title">Take Photo</div>
+        <div class="option-hint">Use your camera</div>
+      </label>
+      <label class="photo-option">
+        <input type="file" id="photoInput" accept="image/*">
+        <div class="option-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </div>
+        <div class="option-title">Upload Photo</div>
+        <div class="option-hint">From your library</div>
+      </label>
+    </div>
+    <div class="photo-preview" id="preview">
+      <img id="previewImg" alt="">
+      <div class="photo-actions">
+        <button type="button" class="retake-btn" id="retakeBtn">Choose a different photo</button>
+      </div>
+    </div>
   </section>
 
   <section class="step" data-step="3">
     <div class="step-eyebrow">Step Three</div>
-    <h2 class="step-title">Show us your <em>hair</em></h2>
-    <p class="step-desc">A clear photo helps our AI estimate length, density, and color volume — no need to guess.</p>
-    <label class="upload-zone">
-      <input type="file" id="photoInput" accept="image/*">
-      <div class="upload-icon">✦</div>
-      <div class="upload-title">Upload a photo</div>
-      <div class="upload-hint">Tap to browse · JPG or PNG · Stays on your device</div>
-    </label>
-    <div class="photo-preview" id="preview"><img id="previewImg" alt=""></div>
-  </section>
-
-  <section class="step" data-step="4">
-    <div class="step-eyebrow">Step Four</div>
     <h2 class="step-title">Analyzing your <em>photo</em></h2>
     <p class="step-desc">Our AI is reading length, density, and color volume.</p>
     <div class="analyzing" id="analyzingBlock">
@@ -291,11 +323,11 @@
       <div class="finding-row"><span>Estimated length</span><span id="fLength">—</span></div>
       <div class="finding-row"><span>Density / thickness</span><span id="fDensity">—</span></div>
       <div class="finding-row"><span>Extra color needed</span><span id="fOz">—</span></div>
-      <div class="finding-row"><span>Length / thickness surcharge</span><span id="fSur">—</span></div>
+      <div class="finding-row" id="fTimeRow"><span>Time-based adjustment</span><span id="fTime">—</span></div>
     </div>
   </section>
 
-  <section class="step" data-step="5">
+  <section class="step" data-step="4">
     <div class="step-eyebrow">Your Quote</div>
     <h2 class="step-title">Here's your <em>estimate</em></h2>
     <p class="step-desc">A transparent breakdown of every line item.</p>
@@ -319,27 +351,44 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   const SERVICES = [
-    { id:'root-cut',  name:'Root Color with Cut',           desc:'Root touch-up + finished haircut',        price:165, fixed:true },
-    { id:'root',      name:'Root Color Only',               desc:'Touch up regrowth at the root',           price:95 },
-    { id:'allover',   name:'All-Over Permanent Color',      desc:'Full single-process color',               price:125 },
-    { id:'full-hi',   name:'Full Highlights',               desc:'Foils placed throughout',                 price:250 },
-    { id:'part-hi',   name:'Partial Highlights · Basic',    desc:'Foils around the face & crown',           price:145 },
-    { id:'full-color',name:'Full Highlights + All-Over',    desc:'Highlights combined with all-over color', price:295 },
-    { id:'low',       name:'Lowlights Added',               desc:'Depth woven in to balance lightness',     price:45 },
-    { id:'glaze-cut', name:'All-Over Glaze with Haircut',   desc:'Toner + finished haircut',                price:120 },
-    { id:'shine',     name:'Clear All-Over Glaze for Shine',desc:'High-gloss shine treatment',              price:65, fixed:true },
-    { id:'fashion',   name:'Highlights with Fashion Color', desc:'Highlights paired with a fashion shade',  price:250 },
-    { id:'correct',   name:'Color Correction',              desc:'Charged at $150 per hour',                price:150, unit:'/hr' },
-  ];
-  const ADDONS = [
-    { id:'glaze',  name:'Glaze / Toner',    desc:'Refresh tone & shine',                   price:35 },
-    { id:'cut',    name:'Haircut Included', desc:'Add a finished cut to your service',     price:45 },
-    { id:'longer', name:'Longer / Thicker', desc:'Optional manual flag (AI also detects)', price:25 },
+    { id:'root-cut',    name:'Root Color with Cut',            desc:'Root touch-up + finished haircut',         price:105 },
+    { id:'root',        name:'Root Color Only',                desc:'Touch up regrowth at the root',            price:95 },
+    { id:'allover',     name:'All-Over Permanent Color',       desc:'Full single-process color',                price:125 },
+    { id:'full-hi',     name:'Full Highlights',                desc:'Foils throughout · time-based by length',  price:250, timeBased:true },
+    { id:'full-color',  name:'Full Highlights + All-Over',     desc:'Highlights combined with all-over color',  price:300, timeBased:true },
+    { id:'part-hi',     name:'Partial Highlights · Basic',     desc:'Foils around the face & crown',            price:185, timeBased:true },
+    { id:'low',         name:'Lowlights Added',                desc:'Depth woven in to balance lightness',      price:45 },
+    { id:'glaze-cut',   name:'All-Over Glaze with Cut',        desc:'Toner + finished haircut',                 price:185 },
+    { id:'short-glaze', name:'Short Hair Clear Glaze + Cut',   desc:'Clear shine glaze + finished haircut',     price:130 },
+    { id:'shine',       name:'Clear All-Over Glaze for Shine', desc:'High-gloss shine treatment',               price:65 },
+    { id:'fashion',     name:'Highlights with Fashion Color',  desc:'Highlights paired with a fashion shade',   price:250, timeBased:true },
+    { id:'correct',     name:'Color Correction',               desc:'Charged at $125 per hour',                 price:150, unit:'/hr' },
   ];
 
-  const state = { step:1, services:new Set(), addons:new Set(), photo:null, analysis:null };
+  const state = { step:1, services:new Set(), photo:null, analysis:null };
   const fmt = n => '$' + Math.round(n).toLocaleString();
   const $ = id => document.getElementById(id);
+  const HOURLY = 125;
+
+  function hasTimeBased() {
+    return Array.from(state.services).some(id => {
+      const s = SERVICES.find(x => x.id === id);
+      return s && s.timeBased;
+    });
+  }
+
+  function calcAdjustments() {
+    if (!state.analysis) return { extraOz:0, timeHours:0, extraCost:0, timeCost:0, total:0 };
+    const a = state.analysis;
+    const lengthOz   = { 'Short':0, 'Medium':1, 'Long':2, 'Extra Long':3 }[a.lengthLabel] || 0;
+    const densityOz  = { 'Fine':0, 'Medium':1, 'Thick':2 }[a.densityLabel] || 0;
+    const timeHours  = { 'Short':0, 'Medium':1, 'Long':2, 'Extra Long':3 }[a.lengthLabel] || 0;
+    const timeBased  = hasTimeBased();
+    const extraOz    = timeBased ? densityOz : (lengthOz + densityOz);
+    const extraCost  = extraOz * 10;
+    const timeCost   = timeBased ? timeHours * HOURLY : 0;
+    return { extraOz, timeHours, extraCost, timeCost, total: extraCost + timeCost, timeBased };
+  }
 
   function renderCards(items, container, set) {
     container.innerHTML = items.map(it => `
@@ -348,7 +397,7 @@ document.addEventListener('DOMContentLoaded', function() {
           <div class="card-name">${it.name}</div>
           <div class="card-desc">${it.desc}</div>
         </div>
-        <div class="card-price">${fmt(it.price)}${it.unit||''}<small>${it.fixed?'flat':'starts'}</small></div>
+        <div class="card-price">${fmt(it.price)}${it.unit||''}<small>${it.unit?'rate':'and up'}</small></div>
         <div class="check"></div>
       </div>`).join('');
     container.querySelectorAll('.card').forEach(el => {
@@ -364,26 +413,20 @@ document.addEventListener('DOMContentLoaded', function() {
   function calcSubtotal() {
     let sub = 0;
     state.services.forEach(id => sub += SERVICES.find(s => s.id===id).price);
-    state.addons.forEach(id => sub += ADDONS.find(a => a.id===id).price);
     return sub;
   }
   function calcTotal() {
-    let total = calcSubtotal();
-    if (state.analysis) total += state.analysis.extraOz*10 + state.analysis.surcharge;
-    return total;
+    return calcSubtotal() + calcAdjustments().total;
   }
   function canAdvance() {
     if (state.step === 1) return state.services.size > 0;
-    if (state.step === 2) return true;
-    if (state.step === 3) return !!state.photo;
-    if (state.step === 4) return !!state.analysis;
-    if (state.step === 5) return true;
+    if (state.step === 2) return !!state.photo;
+    if (state.step === 3) return !!state.analysis;
+    if (state.step === 4) return true;
     return false;
   }
   function updateTotals() {
-    const s = calcSubtotal();
-    $('runAmt1').textContent = fmt(s);
-    $('runAmt2').textContent = fmt(s);
+    $('runAmt1').textContent = fmt(calcSubtotal());
     $('nextBtn').disabled = !canAdvance();
   }
 
@@ -396,25 +439,38 @@ document.addEventListener('DOMContentLoaded', function() {
       d.classList.toggle('active', i === n-1);
       d.classList.toggle('done', i < n-1);
     });
-    $('backBtn').style.display = (n>1 && n!==4) ? 'block' : 'none';
-    $('nextBtn').textContent = n === 5 ? 'Start Over' : 'Continue';
+    $('backBtn').style.display = (n>1 && n!==3) ? 'block' : 'none';
+    $('nextBtn').textContent = n === 4 ? 'Start Over' : 'Continue';
     $('nextBtn').disabled = !canAdvance();
     window.scrollTo({top:0, behavior:'smooth'});
-    if (n === 4) runAnalysis();
-    if (n === 5) renderQuote();
+    if (n === 3) runAnalysis();
+    if (n === 4) renderQuote();
   }
 
-  $('photoInput').addEventListener('change', function(e) {
-    const file = e.target.files[0];
+  function handlePhotoFile(file) {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = ev => {
       state.photo = ev.target.result;
       $('previewImg').src = state.photo;
       $('preview').classList.add('shown');
+      $('photoOptions').style.display = 'none';
       $('nextBtn').disabled = false;
     };
     reader.readAsDataURL(file);
+  }
+
+  $('cameraInput').addEventListener('change', e => handlePhotoFile(e.target.files[0]));
+  $('photoInput').addEventListener('change', e => handlePhotoFile(e.target.files[0]));
+
+  $('retakeBtn').addEventListener('click', function() {
+    state.photo = null;
+    state.analysis = null;
+    $('preview').classList.remove('shown');
+    $('photoOptions').style.display = 'grid';
+    $('cameraInput').value = '';
+    $('photoInput').value = '';
+    $('nextBtn').disabled = true;
   });
 
   function analyzePhoto(dataUrl) {
@@ -438,19 +494,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         const darkRatio = darkPx/totalPx;
         const lengthRatio = lastDarkRow/H;
-        let lengthLabel, lengthExtra;
-        if (lengthRatio < 0.45)      { lengthLabel='Short';      lengthExtra=0; }
-        else if (lengthRatio < 0.65) { lengthLabel='Medium';     lengthExtra=1; }
-        else if (lengthRatio < 0.82) { lengthLabel='Long';       lengthExtra=2; }
-        else                         { lengthLabel='Extra Long'; lengthExtra=3; }
-        let densityLabel, densityExtra;
-        if (darkRatio < 0.18)      { densityLabel='Fine';   densityExtra=0; }
-        else if (darkRatio < 0.32) { densityLabel='Medium'; densityExtra=1; }
-        else                       { densityLabel='Thick';  densityExtra=2; }
-        const extraOz = lengthExtra + densityExtra;
-        const surcharge = (lengthLabel==='Long' || lengthLabel==='Extra Long') ? 25
-                        : (densityLabel==='Thick' ? 15 : 0);
-        resolve({ lengthLabel, densityLabel, extraOz, surcharge });
+        let lengthLabel;
+        if (lengthRatio < 0.45)      lengthLabel = 'Short';
+        else if (lengthRatio < 0.65) lengthLabel = 'Medium';
+        else if (lengthRatio < 0.82) lengthLabel = 'Long';
+        else                         lengthLabel = 'Extra Long';
+        let densityLabel;
+        if (darkRatio < 0.18)      densityLabel = 'Fine';
+        else if (darkRatio < 0.32) densityLabel = 'Medium';
+        else                       densityLabel = 'Thick';
+        resolve({ lengthLabel, densityLabel });
       };
       img.src = dataUrl;
     });
@@ -474,11 +527,20 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     const result = await analyzePhoto(state.photo);
     state.analysis = result;
+    const adj = calcAdjustments();
     $('fLength').textContent = result.lengthLabel;
     $('fDensity').textContent = result.densityLabel;
-    $('fOz').textContent = result.extraOz === 0
-      ? 'None needed' : `+${result.extraOz} oz · ${fmt(result.extraOz*10)}`;
-    $('fSur').textContent = result.surcharge === 0 ? 'None' : `+${fmt(result.surcharge)}`;
+    $('fOz').textContent = adj.extraOz === 0
+      ? 'None needed'
+      : `+${adj.extraOz} oz · ${fmt(adj.extraCost)}`;
+    if (adj.timeBased) {
+      $('fTimeRow').style.display = 'flex';
+      $('fTime').textContent = adj.timeHours === 0
+        ? 'Within base time'
+        : `+${adj.timeHours} hr · ${fmt(adj.timeCost)}`;
+    } else {
+      $('fTimeRow').style.display = 'none';
+    }
     $('analyzingBlock').style.display = 'none';
     $('findings').style.display = 'block';
     $('nextBtn').disabled = false;
@@ -490,17 +552,12 @@ document.addEventListener('DOMContentLoaded', function() {
       const s = SERVICES.find(x => x.id===id);
       rows.push(`<div class="breakdown-row"><span>${s.name}</span><span>${fmt(s.price)}${s.unit||''}</span></div>`);
     });
-    state.addons.forEach(id => {
-      const a = ADDONS.find(x => x.id===id);
-      rows.push(`<div class="breakdown-row"><span>${a.name}</span><span>+${fmt(a.price)}</span></div>`);
-    });
-    if (state.analysis) {
-      if (state.analysis.extraOz > 0) {
-        rows.push(`<div class="breakdown-row"><span>Extra color · ${state.analysis.extraOz} oz</span><span>+${fmt(state.analysis.extraOz*10)}</span></div>`);
-      }
-      if (state.analysis.surcharge > 0) {
-        rows.push(`<div class="breakdown-row"><span>Length / thickness adjustment</span><span>+${fmt(state.analysis.surcharge)}</span></div>`);
-      }
+    const adj = calcAdjustments();
+    if (adj.extraOz > 0) {
+      rows.push(`<div class="breakdown-row"><span>Extra color · ${adj.extraOz} oz</span><span>+${fmt(adj.extraCost)}</span></div>`);
+    }
+    if (adj.timeCost > 0) {
+      rows.push(`<div class="breakdown-row"><span>Extra time · ${adj.timeHours} hr @ $${HOURLY}/hr</span><span>+${fmt(adj.timeCost)}</span></div>`);
     }
     rows.push(`<div class="breakdown-row total"><span>Total estimate</span><span>${fmt(calcTotal())}</span></div>`);
     $('breakdown').innerHTML = rows.join('');
@@ -508,15 +565,15 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   $('nextBtn').addEventListener('click', function() {
-    if (state.step === 5) {
+    if (state.step === 4) {
       state.services.clear();
-      state.addons.clear();
       state.photo = null;
       state.analysis = null;
       $('preview').classList.remove('shown');
+      $('photoOptions').style.display = 'grid';
+      $('cameraInput').value = '';
       $('photoInput').value = '';
       renderCards(SERVICES, $('services'), state.services);
-      renderCards(ADDONS, $('addons'), state.addons);
       updateTotals();
       setStep(1);
     } else {
@@ -524,11 +581,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
   $('backBtn').addEventListener('click', function() {
-    if (state.step > 1) setStep(state.step === 5 ? 3 : state.step - 1);
+    if (state.step > 1) setStep(state.step === 4 ? 2 : state.step - 1);
   });
 
   renderCards(SERVICES, $('services'), state.services);
-  renderCards(ADDONS, $('addons'), state.addons);
 });
 </script>
 </body>
