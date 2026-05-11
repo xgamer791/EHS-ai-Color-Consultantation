@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{--cream:#f6efe4;--cream-soft:#fbf7f0;--paper:#fefcf8;--mocha:#2e2118;--mocha-soft:#6b5443;--mocha-mute:#9a8775;--rose:#c89b7b;--rose-deep:#a8765a;--gold:#b89968;--line:#e6dccd;--line-soft:#efe7d8;--shadow-sm:0 1px 2px rgba(58,42,31,.04);--shadow-md:0 2px 8px rgba(58,42,31,.06),0 12px 32px rgba(58,42,31,.06)}
+  :root{--cream:#f6efe4;--cream-soft:#fbf7f0;--paper:#fefcf8;--mocha:#2e2118;--mocha-soft:#6b5443;--mocha-mute:#9a8775;--rose:#c89b7b;--rose-deep:#a8765a;--gold:#b89968;--line:#e6dccd;--line-soft:#efe7d8;--ban:#7a1f1f;--warn:#a86a1f;--shadow-sm:0 1px 2px rgba(58,42,31,.04);--shadow-md:0 2px 8px rgba(58,42,31,.06),0 12px 32px rgba(58,42,31,.06)}
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   body{font-family:'Manrope',sans-serif;background:var(--cream);color:var(--mocha);line-height:1.6;min-height:100vh;background-image:radial-gradient(at 0% 0%,rgba(200,155,123,.10) 0%,transparent 50%),radial-gradient(at 100% 100%,rgba(184,153,104,.08) 0%,transparent 55%);background-attachment:fixed;padding-bottom:env(safe-area-inset-bottom)}
   .app{max-width:540px;margin:0 auto;padding:24px 20px 140px;position:relative}
@@ -77,7 +77,6 @@
   .photo-actions{display:flex;justify-content:center;padding:12px;border-top:1px solid var(--line-soft);background:var(--cream-soft)}
   .retake-btn{background:transparent;border:none;font-family:'Manrope',sans-serif;font-size:13px;color:var(--rose-deep);cursor:pointer;padding:6px 14px;letter-spacing:.04em;font-weight:500}
   .photo-tip{margin-top:14px;padding:12px 14px;background:var(--cream-soft);border-left:3px solid var(--rose);border-radius:8px;font-size:12.5px;color:var(--mocha-soft);font-family:'Fraunces',serif;font-style:italic;line-height:1.5}
-
   .analyze-stage{position:relative;display:flex;flex-direction:column;align-items:center;padding:24px 0 8px}
   .analyze-canvas{position:relative;width:240px;height:240px;display:flex;align-items:center;justify-content:center;margin-bottom:28px}
   .photo-disc{position:absolute;inset:38px;border-radius:50%;overflow:hidden;background:var(--cream-soft);border:1px solid var(--line);box-shadow:0 8px 24px rgba(58,42,31,.10),inset 0 0 0 1px rgba(255,255,255,.4)}
@@ -108,13 +107,13 @@
   .stage-detail{font-size:11.5px;color:var(--mocha-mute);letter-spacing:.18em;text-transform:uppercase;text-align:center;margin-top:6px;font-weight:500;min-height:16px;transition:opacity .25s ease}
   .fade-swap{animation:fadeSwap .5s ease both}
   @keyframes fadeSwap{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
-
   .findings{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:20px;margin-top:20px}
   .findings.reveal{animation:revealUp .6s cubic-bezier(.34,1.2,.4,1) both}
   @keyframes revealUp{from{opacity:0;transform:translateY(16px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
   .ai-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:999px;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;margin-bottom:12px}
   .ai-badge.vision{background:var(--mocha);color:var(--cream)}
   .ai-badge.local{background:var(--cream-soft);color:var(--mocha-soft);border:1px solid var(--line)}
+  .ai-badge.cached{background:var(--cream-soft);color:var(--rose-deep);border:1px solid var(--rose)}
   .ai-badge::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor}
   .finding-row{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px dashed var(--line-soft);font-size:14px;opacity:0;animation:rowIn .5s ease both}
   .finding-row:nth-child(2){animation-delay:.1s}
@@ -127,17 +126,31 @@
   .finding-row span:last-child{font-weight:500;font-family:'Fraunces',serif;font-style:italic}
   .ai-note{font-size:11.5px;color:var(--mocha-mute);margin-top:14px;padding-top:14px;border-top:1px dashed var(--line-soft);font-style:italic;font-family:'Fraunces',serif;text-align:center;line-height:1.5;opacity:0;animation:rowIn .5s ease .58s both}
 
-  /* Polite rejection panel */
   .gentle-stop{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:32px 24px;margin-top:20px;text-align:center;box-shadow:var(--shadow-md);animation:revealUp .6s cubic-bezier(.34,1.2,.4,1) both}
+  .gentle-stop.cheeky{background:linear-gradient(180deg,var(--cream-soft) 0%,var(--paper) 100%)}
+  .gentle-stop.warn{border-color:var(--warn);background:linear-gradient(180deg,#fdf3e6 0%,var(--paper) 100%)}
+  .gentle-stop.ban{border-color:var(--ban);background:linear-gradient(180deg,#f5e3e3 0%,var(--paper) 100%)}
   .gentle-stop-icon{width:64px;height:64px;border-radius:50%;background:var(--cream-soft);border:1px solid var(--line);margin:0 auto 18px;display:flex;align-items:center;justify-content:center;color:var(--rose-deep);font-family:'Fraunces',serif;font-size:28px}
+  .gentle-stop.warn .gentle-stop-icon{color:var(--warn);border-color:rgba(168,106,31,.3);background:#fdf3e6}
+  .gentle-stop.ban .gentle-stop-icon{color:var(--ban);border-color:rgba(122,31,31,.3);background:#f5e3e3}
   .gentle-stop-title{font-family:'Fraunces',serif;font-weight:300;font-size:24px;color:var(--mocha);margin-bottom:10px;letter-spacing:-.01em}
   .gentle-stop-title em{font-style:italic;color:var(--rose-deep)}
-  .gentle-stop-body{font-size:14px;color:var(--mocha-soft);line-height:1.6;margin-bottom:18px;max-width:380px;margin-left:auto;margin-right:auto}
+  .gentle-stop.warn .gentle-stop-title em{color:var(--warn)}
+  .gentle-stop.ban .gentle-stop-title em{color:var(--ban)}
+  .gentle-stop-body{font-size:14px;color:var(--mocha-soft);line-height:1.6;margin-bottom:18px;max-width:400px;margin-left:auto;margin-right:auto}
+  .gentle-stop-body strong{color:var(--mocha);font-weight:600}
   .gentle-stop-actions{display:flex;flex-direction:column;gap:8px;max-width:280px;margin:0 auto}
   .gentle-stop-actions button{padding:13px 20px;border-radius:999px;border:none;font-family:'Manrope',sans-serif;font-weight:600;font-size:13.5px;cursor:pointer;letter-spacing:.04em;transition:all .2s ease}
   .gentle-stop-actions .primary{background:var(--mocha);color:var(--cream)}
   .gentle-stop-actions .primary:active{transform:translateY(1px)}
   .gentle-stop-actions .ghost{background:transparent;color:var(--mocha-soft);border:1px solid var(--line)}
+
+  .ban-screen{min-height:80vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;text-align:center}
+  .ban-icon{width:88px;height:88px;border-radius:50%;background:#f5e3e3;border:2px solid var(--ban);margin-bottom:24px;display:flex;align-items:center;justify-content:center;color:var(--ban);font-size:40px}
+  .ban-title{font-family:'Fraunces',serif;font-weight:300;font-size:32px;color:var(--mocha);margin-bottom:16px;letter-spacing:-.01em}
+  .ban-title em{font-style:italic;color:var(--ban)}
+  .ban-body{font-size:15px;color:var(--mocha-soft);line-height:1.7;max-width:440px;margin-bottom:20px}
+  .ban-meta{font-size:11.5px;color:var(--mocha-mute);font-family:'Fraunces',serif;font-style:italic}
 
   .quote-box{background:var(--mocha);color:var(--cream);border-radius:20px;padding:28px 24px;margin-bottom:18px;background-image:radial-gradient(at 100% 0%,rgba(200,155,123,.15) 0%,transparent 50%)}
   .quote-label{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--rose);margin-bottom:8px}
@@ -164,7 +177,7 @@
 </style>
 </head>
 <body>
-<div class="app">
+<div class="app" id="appRoot">
   <header class="brand">
     <button type="button" class="settings-btn" id="settingsBtn" aria-label="Settings">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -257,8 +270,8 @@
     </div>
 
     <div class="gentle-stop" id="gentleStop" style="display:none">
-      <div class="gentle-stop-icon">✿</div>
-      <div class="gentle-stop-title">A little <em>note from us</em></div>
+      <div class="gentle-stop-icon" id="gentleStopIcon">✿</div>
+      <div class="gentle-stop-title" id="gentleStopTitle">A little <em>note from us</em></div>
       <div class="gentle-stop-body" id="gentleStopBody"></div>
       <div class="gentle-stop-actions">
         <button type="button" class="primary" id="gentleStopRetry">Try a different photo</button>
@@ -280,7 +293,7 @@
     <p class="disclaimer">Non-binding estimate. Time-based services include a 3.5 hr base; Long hair may add up to 1.5 hr ($125/hr); Extra Long up to 3.5 hr.</p>
   </section>
 
-  <div class="nav-bar">
+  <div class="nav-bar" id="navBar">
     <div class="nav-inner">
       <button type="button" class="btn btn-ghost" id="backBtn" style="display:none">← Back</button>
       <button type="button" class="btn btn-primary" id="nextBtn" disabled>Continue</button>
@@ -290,6 +303,20 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+
+  // ----- Hard ban check, runs before anything else -----
+  const BAN_STORAGE = 'maisonhue_banned';
+  if (localStorage.getItem(BAN_STORAGE) === '1') {
+    document.getElementById('appRoot').innerHTML = `
+      <div class="ban-screen">
+        <div class="ban-icon">✕</div>
+        <div class="ban-title">Access <em>revoked</em></div>
+        <div class="ban-body">This device uploaded explicit content that violates our terms of use. Access to Maison Hue's quote tool has been permanently revoked from this device.<br><br>If this is a mistake, please contact the salon directly to discuss services.</div>
+        <div class="ban-meta">Maison Hue · Women's Color Salon</div>
+      </div>`;
+    return;
+  }
+
   const SERVICES = [
     { id:'root-cut',    name:'Root Color with Cut',            desc:'Root touch-up + finished haircut',                       price:165 },
     { id:'root',        name:'Root Color Only',                desc:'Touch up regrowth at the root',                          price:95 },
@@ -305,13 +332,50 @@ document.addEventListener('DOMContentLoaded', function() {
     { id:'correct',     name:'Color Correction',               desc:'Charged at $150 per hour',                               price:150, unit:'/hr' },
   ];
 
-  const state = { step:1, services:new Set(), photo:null, analysis:null };
+  const state = { step:1, services:new Set(), photo:null, photoHash:null, analysis:null };
   const fmt = n => '$' + Math.round(n).toLocaleString();
   const fmtHr = h => (Math.round(h * 10) / 10).toString().replace(/\.0$/, '');
   const $ = id => document.getElementById(id);
   const HOURLY = 125;
   const KEY_STORAGE = 'maisonhue_anthropic_key';
+  const CACHE_STORAGE = 'maisonhue_analysis_cache';
+  const WARN_STORAGE = 'maisonhue_inappropriate_warnings';
+  const CACHE_MAX_ENTRIES = 30;
   const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+  async function hashPhoto(dataUrl) {
+    const enc = new TextEncoder().encode(dataUrl);
+    const buf = await crypto.subtle.digest('SHA-256', enc);
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 32);
+  }
+  function loadCache() { try { return JSON.parse(localStorage.getItem(CACHE_STORAGE) || '{}'); } catch (e) { return {}; } }
+  function saveCache(cache) {
+    try {
+      const entries = Object.entries(cache);
+      if (entries.length > CACHE_MAX_ENTRIES) {
+        entries.sort((a, b) => (a[1]._t || 0) - (b[1]._t || 0));
+        cache = Object.fromEntries(entries.slice(-CACHE_MAX_ENTRIES));
+      }
+      localStorage.setItem(CACHE_STORAGE, JSON.stringify(cache));
+    } catch (e) {}
+  }
+  function getCachedAnalysis(hash) { if (!hash) return null; return loadCache()[hash] || null; }
+  function setCachedAnalysis(hash, analysis) {
+    if (!hash || !analysis) return;
+    const cache = loadCache();
+    cache[hash] = { ...analysis, _t: Date.now() };
+    saveCache(cache);
+  }
+
+  function getWarningCount() { return parseInt(localStorage.getItem(WARN_STORAGE) || '0', 10); }
+  function incrementWarning() {
+    const n = getWarningCount() + 1;
+    localStorage.setItem(WARN_STORAGE, String(n));
+    return n;
+  }
+  function applyBan() {
+    localStorage.setItem(BAN_STORAGE, '1');
+  }
 
   function calcExtraHours(lengthLabel, densityLabel) {
     if (lengthLabel === 'Short' || lengthLabel === 'Medium') return 0;
@@ -429,8 +493,10 @@ document.addEventListener('DOMContentLoaded', function() {
   function handlePhotoFile(file) {
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = ev => {
+    reader.onload = async ev => {
       state.photo = ev.target.result;
+      state.photoHash = await hashPhoto(state.photo);
+      state.analysis = null;
       $('previewImg').src = state.photo;
       $('preview').classList.add('shown');
       $('photoOptions').style.display = 'none';
@@ -441,7 +507,7 @@ document.addEventListener('DOMContentLoaded', function() {
   $('cameraInput').addEventListener('change', e => handlePhotoFile(e.target.files[0]));
   $('photoInput').addEventListener('change', e => handlePhotoFile(e.target.files[0]));
   $('retakeBtn').addEventListener('click', function() {
-    state.photo = null; state.analysis = null;
+    state.photo = null; state.photoHash = null; state.analysis = null;
     $('preview').classList.remove('shown');
     $('photoOptions').style.display = 'grid';
     $('cameraInput').value = ''; $('photoInput').value = '';
@@ -466,11 +532,13 @@ document.addEventListener('DOMContentLoaded', function() {
   async function analyzeWithClaude(dataUrl, apiKey) {
     const downscaled = await downscaleImage(dataUrl, 1024);
     const base64 = downscaled.split(',')[1];
-    const prompt = `You are analyzing a hair photo for a women's-only salon pricing app. Respond with ONLY a JSON object — no markdown, no preamble, no code fences.
+    const prompt = `You are analyzing a photo for a women's-only hair color salon pricing app. Be deterministic and consistent: the same photo must always produce the same answer. Respond with ONLY a JSON object — no markdown, no preamble, no code fences.
 
 Schema:
 {
+  "contentClass": "ok_hair" | "non_hair_object" | "inappropriate" | "explicit",
   "subject": "woman" | "man" | "child" | "no_person" | "unclear",
+  "objectName": "short noun phrase describing the main subject if not hair — e.g. 'a golden retriever', 'a pepperoni pizza', 'a parked car', 'a bowl of soup'. Empty string if not applicable.",
   "lengthLabel": "Short" | "Medium" | "Long" | "Extra Long",
   "densityLabel": "Fine" | "Medium" | "Thick",
   "faceVisible": boolean,
@@ -478,25 +546,36 @@ Schema:
   "notes": "one short sentence describing what you see"
 }
 
-Subject classification (be respectful and use visible visual cues only — hair, face structure, presentation):
-- "woman": adult woman (18+)
+Content classification (this is the most important field):
+- "ok_hair": photo clearly shows a person whose hair can be assessed — head, face, and hair are reasonably visible and the subject is appropriately dressed
+- "non_hair_object": photo shows an animal, food, vehicle, landscape, screenshot, meme, drawing, or any inanimate object — basically anything other than a real person whose hair we can quote
+- "inappropriate": suggestive content, partial undress, lingerie, swimwear posed sexually, gratuitously revealing clothing, or sexually suggestive poses — NOT explicit nudity but inappropriate for a professional salon quote app
+- "explicit": full nudity, exposed genitalia, exposed nipples, sexual acts, or pornographic content of any kind
+
+If contentClass is "non_hair_object", set "objectName" to a short friendly noun phrase describing what the photo actually shows (e.g. "a tabby cat", "a slice of cake", "a sunset over the ocean", "a screenshot of a text message").
+
+Subject classification (only relevant if contentClass is "ok_hair"):
+- "woman": adult woman (18+) — based on visible visual cues only
 - "man": adult man (18+)
-- "child": person who appears under 18 regardless of gender
-- "no_person": photo shows no person at all (object, animal, landscape, etc.)
-- "unclear": you genuinely cannot tell, or face is fully obscured
+- "child": person who appears under 18
+- "no_person": no person in the photo
+- "unclear": cannot tell
 
-If "subject" is anything other than "woman", still fill in lengthLabel and densityLabel as best you can but they will not be used.
-
-Length definitions (use EXACTLY these):
+Length definitions — apply strictly using the face/jawline as the reference anchor:
 - "Short": hair ends at chin or higher (above the jawline)
 - "Medium": hair ends between the neck and the shoulders
 - "Long": hair ends below the shoulders down to the mid-back
 - "Extra Long": hair ends past the mid-back
 
+When a photo is borderline between two categories, choose the SHORTER of the two. Always.
+
 Density definitions:
 - "Fine": thin or sparse strands, scalp may be partially visible
 - "Medium": average thickness and volume
-- "Thick": dense, voluminous, lots of strands`;
+- "Thick": dense, voluminous, lots of strands, no scalp visible anywhere
+
+Err on the side of caution: if you are unsure between "inappropriate" and "explicit", choose "inappropriate". If you are unsure between "ok_hair" and "inappropriate", and the person is in normal everyday clothing or salon-appropriate attire, choose "ok_hair".`;
+
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -507,7 +586,8 @@ Density definitions:
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 350,
+        max_tokens: 400,
+        temperature: 0,
         messages: [{
           role: 'user',
           content: [
@@ -526,15 +606,19 @@ Density definitions:
     const text = (data.content[0]?.text || '').trim();
     const cleaned = text.replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/\s*```$/, '');
     const parsed = JSON.parse(cleaned);
+    const contentClass = parsed.contentClass || 'ok_hair';
+    const subject = parsed.subject || 'unclear';
     return {
-      subject: parsed.subject || 'unclear',
+      contentClass,
+      subject,
+      objectName: parsed.objectName || '',
       lengthLabel: parsed.lengthLabel,
       densityLabel: parsed.densityLabel,
       faceVisible: parsed.faceVisible,
       confidence: parsed.confidence,
       notes: parsed.notes,
       source: 'claude',
-      allowed: parsed.subject === 'woman'
+      allowed: contentClass === 'ok_hair' && subject === 'woman'
     };
   }
 
@@ -587,7 +671,7 @@ Density definitions:
         if (darkRatio < 0.18)      densityLabel = 'Fine';
         else if (darkRatio < 0.32) densityLabel = 'Medium';
         else                       densityLabel = 'Thick';
-        resolve({ subject:'unclear', lengthLabel, densityLabel, faceVisible: faceDetected, confidence: 'low', source: 'local', allowed: true });
+        resolve({ contentClass:'ok_hair', subject:'unclear', objectName:'', lengthLabel, densityLabel, faceVisible: faceDetected, confidence: 'low', source: 'local', allowed: true });
       };
       img.src = dataUrl;
     });
@@ -601,10 +685,15 @@ Density definitions:
     { label:'Estimating color volume needed…',detail:'step 5 of 6', pct:85, ms:800 },
     { label:'Pricing your service…',          detail:'step 6 of 6', pct:100,ms:700 },
   ];
+  const CACHED_STAGES = [
+    { label:'Recalling your previous analysis…', detail:'cached result',  pct:40, ms:500 },
+    { label:'Confirming length & density…',      detail:'cached result',  pct:75, ms:500 },
+    { label:'Pricing your service…',             detail:'cached result',  pct:100,ms:500 },
+  ];
 
-  async function runAnimation() {
+  async function runAnimation(stages) {
     $('progFill').style.width = '0%';
-    for (const s of STAGES) {
+    for (const s of stages) {
       const labelEl = $('stageLabel');
       const detailEl = $('stageDetail');
       labelEl.classList.remove('fade-swap'); detailEl.classList.remove('fade-swap');
@@ -630,7 +719,10 @@ Density definitions:
       $('fTimeRow').style.display = 'none';
     }
     const badge = $('aiBadge');
-    if (a.source === 'claude') {
+    if (a.cached) {
+      badge.textContent = '✦ Saved result · same photo, same quote';
+      badge.className = 'ai-badge cached';
+    } else if (a.source === 'claude') {
       badge.textContent = '✦ Claude Vision · ' + (a.confidence || 'high') + ' confidence';
       badge.className = 'ai-badge vision';
     } else {
@@ -643,30 +735,96 @@ Density definitions:
     else note.textContent = '';
   }
 
-  function gentleStopMessage(subject) {
+  // -------- Cheeky messages for non-hair objects --------
+  function cheekyObjectMessage(objectName) {
+    const obj = (objectName || '').trim();
+    if (!obj) {
+      return {
+        title: "Well, that's <em>not hair</em>",
+        body: "We weren't quite sure what you sent us, but we're confident it doesn't have a scalp. Mind giving it another go with an actual hair photo? We promise our color work is great — but our pet psychic services are a separate appointment.",
+        icon: "?"
+      };
+    }
+    // Lightly customize by category
+    const lower = obj.toLowerCase();
+    let zinger;
+    if (/\b(cat|dog|puppy|kitten|hamster|guinea pig|bird|rabbit|bunny|pet|fish|lizard|snake|parrot)\b/.test(lower)) {
+      zinger = `As cute as ${obj} is, we're a salon for humans — and we'd hate to violate ${obj}'s natural majesty with foils.`;
+    } else if (/\b(pizza|burger|cake|donut|sandwich|soup|salad|coffee|tea|sushi|taco|pasta|bread|cookie|food|meal)\b/.test(lower)) {
+      zinger = `Look, ${obj} looks delicious — but we color hair, not lunches. Unless this is a very avant-garde request, we'll need a real photo.`;
+    } else if (/\b(car|truck|motorcycle|bike|vehicle|plane|boat)\b/.test(lower)) {
+      zinger = `Bold of you to upload ${obj}. We do many things, but auto detailing is not one of them.`;
+    } else if (/\b(screenshot|meme|drawing|cartoon|illustration|painting|art)\b/.test(lower)) {
+      zinger = `Sending us ${obj} is creative, we'll give you that. But our AI can't quote a hair service it can't measure.`;
+    } else if (/\b(landscape|sunset|sky|cloud|beach|mountain|tree|flower|building|wall|ceiling|floor)\b/.test(lower)) {
+      zinger = `${obj.charAt(0).toUpperCase() + obj.slice(1)} is lovely. Truly. But unless the sky has been booking color appointments behind our backs, this isn't quite what we needed.`;
+    } else {
+      zinger = `Look, we're not going to lie — ${obj} is a choice. But it's also not hair.`;
+    }
+    return {
+      title: "That's <em>not hair</em>",
+      body: zinger + " Could you upload a clear photo of the actual hair you'd like quoted?",
+      icon: "?"
+    };
+  }
+
+  function genderMessage(subject) {
     switch (subject) {
       case 'man':
-        return "Thank you so much for stopping by — Maison Hue is a women's color salon, so we're not currently set up to serve men's services. We'd love to help if you're booking for a woman in your life; just upload her photo instead.";
+        return { title: "A little <em>note from us</em>", body: "Thank you so much for stopping by — Maison Hue is a women's color salon, so we're not currently set up to serve men's services. We'd love to help if you're booking for a woman in your life; just upload her photo instead.", icon: "✿" };
       case 'child':
-        return "Thank you for visiting! Our color services are designed for adult women, so we're not able to quote services for minors through this app. Please get in touch with the salon directly if you have questions.";
+        return { title: "A little <em>note from us</em>", body: "Thank you for visiting! Our color services are designed for adult women, so we're not able to quote services for minors through this app. Please get in touch with the salon directly if you have questions.", icon: "✿" };
       case 'no_person':
-        return "We couldn't find a face in this photo. To give you an accurate quote, please upload a clear, well-lit photo of the woman receiving the service.";
-      case 'unclear':
+        return { title: "A little <em>note from us</em>", body: "We couldn't find a face in this photo. To give you an accurate quote, please upload a clear, well-lit photo of the woman receiving the service.", icon: "✿" };
       default:
-        return "We had trouble reading this photo clearly. Could you try a brighter, front-facing photo with the hair fully visible? It helps us give you the most accurate quote.";
+        return { title: "A little <em>note from us</em>", body: "We had trouble reading this photo clearly. Could you try a brighter, front-facing photo with the hair fully visible? It helps us give you the most accurate quote.", icon: "✿" };
     }
   }
 
-  function showGentleStop(subject) {
-    $('gentleStopBody').textContent = gentleStopMessage(subject);
-    $('gentleStop').style.display = 'block';
+  function inappropriateMessage(warningCount) {
+    if (warningCount === 1) {
+      return {
+        title: "Let's keep it <em>salon-appropriate</em>",
+        body: "Hey there — we noticed the photo you uploaded isn't quite right for a professional salon quote. No harm done; just please send a regular, fully-clothed photo with the hair clearly visible. <strong>Heads up:</strong> repeated uploads of inappropriate content will result in losing access to this tool.",
+        icon: "!"
+      };
+    }
+    return {
+      title: "Final <em>warning</em>",
+      body: "This is the second time inappropriate content has been uploaded from this device. Please understand — this is a tool for booking professional hair services, and we need to keep it that way. <strong>One more inappropriate upload and access to Maison Hue will be permanently revoked from this device.</strong>",
+      icon: "!"
+    };
+  }
+
+  function showGentleStop(opts) {
+    // opts: { title, body, icon, kind: 'cheeky'|'warn'|null, allowRetry: bool, allowHome: bool }
+    const panel = $('gentleStop');
+    panel.classList.remove('cheeky', 'warn', 'ban');
+    if (opts.kind) panel.classList.add(opts.kind);
+    $('gentleStopIcon').textContent = opts.icon || '✿';
+    $('gentleStopTitle').innerHTML = opts.title || 'A little <em>note from us</em>';
+    $('gentleStopBody').innerHTML = opts.body || '';
+    $('gentleStopRetry').style.display = opts.allowRetry === false ? 'none' : 'block';
+    $('gentleStopHome').style.display = opts.allowHome === false ? 'none' : 'block';
+    panel.style.display = 'block';
     $('findings').style.display = 'none';
     $('analyzeStage').style.display = 'none';
     $('nextBtn').disabled = true;
   }
 
+  function triggerBan() {
+    applyBan();
+    document.getElementById('appRoot').innerHTML = `
+      <div class="ban-screen">
+        <div class="ban-icon">✕</div>
+        <div class="ban-title">Access <em>revoked</em></div>
+        <div class="ban-body">Explicit content was uploaded from this device, which violates our terms of use. Access to Maison Hue's quote tool has been permanently revoked from this device.<br><br>If this is a mistake, please contact the salon directly to discuss services.</div>
+        <div class="ban-meta">Maison Hue · Women's Color Salon</div>
+      </div>`;
+  }
+
   $('gentleStopRetry').addEventListener('click', () => {
-    state.photo = null; state.analysis = null;
+    state.photo = null; state.photoHash = null; state.analysis = null;
     $('preview').classList.remove('shown');
     $('photoOptions').style.display = 'grid';
     $('cameraInput').value = ''; $('photoInput').value = '';
@@ -675,7 +833,7 @@ Density definitions:
   });
   $('gentleStopHome').addEventListener('click', () => {
     state.services.clear();
-    state.photo = null; state.analysis = null;
+    state.photo = null; state.photoHash = null; state.analysis = null;
     $('preview').classList.remove('shown');
     $('photoOptions').style.display = 'grid';
     $('cameraInput').value = ''; $('photoInput').value = '';
@@ -693,8 +851,19 @@ Density definitions:
     $('gentleStop').style.display = 'none';
     $('nextBtn').disabled = true;
 
-    const apiKey = localStorage.getItem(KEY_STORAGE);
+    if (!state.photoHash && state.photo) {
+      state.photoHash = await hashPhoto(state.photo);
+    }
 
+    const cached = getCachedAnalysis(state.photoHash);
+    if (cached) {
+      await runAnimation(CACHED_STAGES);
+      state.analysis = { ...cached, cached: true };
+      handlePostAnalysis();
+      return;
+    }
+
+    const apiKey = localStorage.getItem(KEY_STORAGE);
     const analysisPromise = (async () => {
       if (apiKey) {
         try { return await analyzeWithClaude(state.photo, apiKey); }
@@ -708,16 +877,55 @@ Density definitions:
       return await analyzeLocally(state.photo);
     })();
 
-    const animationPromise = runAnimation();
+    const animationPromise = runAnimation(STAGES);
     const [analysis] = await Promise.all([analysisPromise, animationPromise]);
     state.analysis = analysis;
-    await sleep(280);
 
-    if (analysis.allowed === false) {
-      showGentleStop(analysis.subject);
+    // Cache Claude results (including rejections — same photo = same answer)
+    if (analysis.source === 'claude') {
+      setCachedAnalysis(state.photoHash, analysis);
+    }
+
+    await sleep(280);
+    handlePostAnalysis();
+  }
+
+  function handlePostAnalysis() {
+    const a = state.analysis;
+
+    // 1. Explicit content → instant permanent ban
+    if (a.contentClass === 'explicit') {
+      triggerBan();
       return;
     }
 
+    // 2. Inappropriate → warning, escalate to ban on third strike
+    if (a.contentClass === 'inappropriate') {
+      const warningCount = incrementWarning();
+      if (warningCount >= 3) {
+        triggerBan();
+        return;
+      }
+      const msg = inappropriateMessage(warningCount);
+      showGentleStop({ title: msg.title, body: msg.body, icon: msg.icon, kind: 'warn' });
+      return;
+    }
+
+    // 3. Non-hair object → cheeky message naming the object
+    if (a.contentClass === 'non_hair_object') {
+      const msg = cheekyObjectMessage(a.objectName);
+      showGentleStop({ title: msg.title, body: msg.body, icon: msg.icon, kind: 'cheeky' });
+      return;
+    }
+
+    // 4. Gender / age rejection
+    if (a.contentClass === 'ok_hair' && a.subject !== 'woman') {
+      const msg = genderMessage(a.subject);
+      showGentleStop({ title: msg.title, body: msg.body, icon: msg.icon });
+      return;
+    }
+
+    // 5. All good → show findings
     updateFindings();
     $('analyzeStage').style.display = 'none';
     const f = $('findings');
@@ -747,7 +955,7 @@ Density definitions:
   $('nextBtn').addEventListener('click', function() {
     if (state.step === 4) {
       state.services.clear();
-      state.photo = null; state.analysis = null;
+      state.photo = null; state.photoHash = null; state.analysis = null;
       $('preview').classList.remove('shown');
       $('photoOptions').style.display = 'grid';
       $('cameraInput').value = ''; $('photoInput').value = '';
