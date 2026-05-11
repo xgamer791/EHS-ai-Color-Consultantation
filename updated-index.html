@@ -117,17 +117,25 @@
   .ai-badge.vision{background:var(--mocha);color:var(--cream)}
   .ai-badge.local{background:var(--cream-soft);color:var(--mocha-soft);border:1px solid var(--line)}
   .ai-badge.cached{background:var(--cream-soft);color:var(--rose-deep);border:1px solid var(--rose)}
+  .ai-badge.edited{background:var(--rose-deep);color:var(--cream)}
   .ai-badge::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor}
-  .finding-row{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px dashed var(--line-soft);font-size:14px;opacity:0;animation:rowIn .5s ease both}
-  .finding-row:nth-child(2){animation-delay:.1s}
-  .finding-row:nth-child(3){animation-delay:.22s}
-  .finding-row:nth-child(4){animation-delay:.34s}
-  .finding-row:nth-child(5){animation-delay:.46s}
-  @keyframes rowIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
+  .finding-row{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px dashed var(--line-soft);font-size:14px}
   .finding-row:last-child{border-bottom:none}
   .finding-row span:first-child{color:var(--mocha-soft)}
   .finding-row span:last-child{font-weight:500;font-family:'Fraunces',serif;font-style:italic}
-  .ai-note{font-size:11.5px;color:var(--mocha-mute);margin-top:14px;padding-top:14px;border-top:1px dashed var(--line-soft);font-style:italic;font-family:'Fraunces',serif;text-align:center;line-height:1.5;opacity:0;animation:rowIn .5s ease .58s both}
+  .ai-note{font-size:11.5px;color:var(--mocha-mute);margin-top:14px;padding-top:14px;border-top:1px dashed var(--line-soft);font-style:italic;font-family:'Fraunces',serif;text-align:center;line-height:1.5}
+  .adjust-link{text-align:center;margin-top:14px;padding-top:14px;border-top:1px dashed var(--line-soft)}
+  .adjust-link button{background:transparent;border:none;font-family:'Manrope',sans-serif;font-size:12.5px;color:var(--rose-deep);cursor:pointer;letter-spacing:.02em;padding:6px 10px;font-weight:600}
+  .adjust-link button:active{opacity:.7}
+  .adjust-panel{margin-top:12px;padding-top:14px;border-top:1px dashed var(--line-soft);animation:fadeUp .3s ease both}
+  .adjust-row{margin-bottom:14px}
+  .adjust-row:last-child{margin-bottom:0}
+  .adjust-label{font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--mocha-soft);font-weight:600;margin-bottom:8px}
+  .adjust-chips{display:flex;flex-wrap:wrap;gap:6px}
+  .adjust-chip{flex:1;min-width:0;padding:9px 8px;background:var(--cream-soft);border:1px solid var(--line);border-radius:999px;font-family:'Manrope',sans-serif;font-size:11.5px;font-weight:500;color:var(--mocha);cursor:pointer;transition:all .15s ease;white-space:nowrap;letter-spacing:.02em}
+  .adjust-chip:active{transform:scale(.97)}
+  .adjust-chip.selected{background:var(--rose-deep);border-color:var(--rose-deep);color:white;font-weight:600;box-shadow:0 1px 4px rgba(168,118,90,.3)}
+  .adjust-hint{font-size:11px;color:var(--mocha-mute);font-style:italic;font-family:'Fraunces',serif;text-align:center;margin-top:10px;line-height:1.5}
   .gentle-stop{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:32px 24px;margin-top:20px;text-align:center;box-shadow:var(--shadow-md);animation:revealUp .6s cubic-bezier(.34,1.2,.4,1) both}
   .gentle-stop.cheeky{background:linear-gradient(180deg,var(--cream-soft) 0%,var(--paper) 100%)}
   .gentle-stop.warn{border-color:var(--warn);background:linear-gradient(180deg,#fdf3e6 0%,var(--paper) 100%)}
@@ -166,6 +174,7 @@
   .profile-label::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--rose-deep)}
   .profile-confidence{font-size:10.5px;color:var(--rose-deep);font-weight:600;letter-spacing:.08em;text-transform:uppercase;display:flex;align-items:center;gap:4px;white-space:nowrap}
   .profile-confidence::before{content:'✦';font-size:10px}
+  .profile-confidence.edited::before{content:'✎'}
   .profile-chips{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .chip{padding:12px 14px;background:var(--cream-soft);border:1px solid var(--line-soft);border-radius:12px}
   .chip-label{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--mocha-mute);font-weight:500;margin-bottom:2px}
@@ -303,6 +312,30 @@
       <div class="finding-row"><span>Extra color needed</span><span id="fOz">—</span></div>
       <div class="finding-row" id="fTimeRow"><span>Time-based adjustment</span><span id="fTime">—</span></div>
       <div class="ai-note" id="aiNote"></div>
+
+      <div class="adjust-link">
+        <button type="button" id="adjustToggle">Doesn't match? Adjust ↓</button>
+      </div>
+      <div class="adjust-panel" id="adjustPanel" style="display:none">
+        <div class="adjust-row">
+          <div class="adjust-label">Length</div>
+          <div class="adjust-chips" id="lengthChips">
+            <button type="button" class="adjust-chip" data-value="Short">Short</button>
+            <button type="button" class="adjust-chip" data-value="Medium">Medium</button>
+            <button type="button" class="adjust-chip" data-value="Long">Long</button>
+            <button type="button" class="adjust-chip" data-value="Extra Long">Extra Long</button>
+          </div>
+        </div>
+        <div class="adjust-row">
+          <div class="adjust-label">Density</div>
+          <div class="adjust-chips" id="densityChips">
+            <button type="button" class="adjust-chip" data-value="Fine">Fine</button>
+            <button type="button" class="adjust-chip" data-value="Medium">Medium</button>
+            <button type="button" class="adjust-chip" data-value="Thick">Thick</button>
+          </div>
+        </div>
+        <p class="adjust-hint">You know your hair best — tap to correct the AI if needed.</p>
+      </div>
     </div>
 
     <div class="gentle-stop" id="gentleStop" style="display:none">
@@ -383,18 +416,18 @@ document.addEventListener('DOMContentLoaded', async function() {
   const SALON_EMAIL = 'hello@maisonhue.com';
 
   // ============ STORAGE KEYS ============
-  const BAN_STORAGE       = 'maisonhue_banned';            // legacy flag (kept for compat)
-  const BAN_LIST_KEY      = 'maisonhue_banned_fps';        // multi-store ban list
+  const BAN_STORAGE       = 'maisonhue_banned';
+  const BAN_LIST_KEY      = 'maisonhue_banned_fps';
   const BAN_DB_NAME       = 'maisonhue_bans_db';
   const BAN_DB_STORE      = 'bans';
-  const WARN_FP_KEY       = 'maisonhue_warn_counts';       // {fingerprint: count}
-  const WARN_STORAGE      = 'maisonhue_inappropriate_warnings'; // legacy fallback
+  const WARN_FP_KEY       = 'maisonhue_warn_counts';
+  const WARN_STORAGE      = 'maisonhue_inappropriate_warnings';
   const KEY_STORAGE       = 'maisonhue_anthropic_key';
-  const CACHE_VERSION     = 5;
-  const CACHE_STORAGE     = 'maisonhue_analysis_cache_v5';
+  const CACHE_VERSION     = 6;
+  const CACHE_STORAGE     = 'maisonhue_analysis_cache_v6';
   const CACHE_MAX_ENTRIES = 30;
 
-  // ============ FINGERPRINT GENERATION ============
+  // ============ FINGERPRINT ============
   async function generateFingerprint() {
     const parts = [];
     try { parts.push(screen.width + 'x' + screen.height + 'x' + screen.colorDepth); } catch(e) { parts.push('s-fail'); }
@@ -407,25 +440,18 @@ document.addEventListener('DOMContentLoaded', async function() {
     parts.push(navigator.deviceMemory || '');
     parts.push(navigator.maxTouchPoints || 0);
     parts.push(navigator.userAgent || '');
-
-    // Canvas fingerprint
     try {
       const c = document.createElement('canvas');
       c.width = 220; c.height = 50;
       const ctx = c.getContext('2d');
       ctx.textBaseline = 'alphabetic';
-      ctx.fillStyle = '#f60';
-      ctx.fillRect(100, 1, 70, 20);
-      ctx.fillStyle = '#069';
-      ctx.font = '11pt no-real-font-123';
+      ctx.fillStyle = '#f60'; ctx.fillRect(100, 1, 70, 20);
+      ctx.fillStyle = '#069'; ctx.font = '11pt no-real-font-123';
       ctx.fillText('Maison Hue 💇', 2, 15);
-      ctx.fillStyle = 'rgba(102,204,0,0.7)';
-      ctx.font = '18pt Arial';
+      ctx.fillStyle = 'rgba(102,204,0,0.7)'; ctx.font = '18pt Arial';
       ctx.fillText('Maison Hue 💇', 4, 45);
       parts.push(c.toDataURL());
     } catch(e) { parts.push('canvas-fail'); }
-
-    // WebGL fingerprint (GPU info — very stable)
     try {
       const c = document.createElement('canvas');
       const gl = c.getContext('webgl') || c.getContext('experimental-webgl');
@@ -439,21 +465,19 @@ document.addEventListener('DOMContentLoaded', async function() {
         parts.push(gl.getParameter(gl.RENDERER) || '');
       } else { parts.push('no-webgl'); }
     } catch(e) { parts.push('webgl-fail'); }
-
     const str = parts.join('|');
     try {
       const enc = new TextEncoder().encode(str);
       const buf = await crypto.subtle.digest('SHA-256', enc);
       return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
     } catch(e) {
-      // Fallback simple hash if crypto.subtle unavailable
       let h = 0;
       for (let i = 0; i < str.length; i++) { h = ((h << 5) - h) + str.charCodeAt(i); h |= 0; }
       return 'fp' + Math.abs(h).toString(16).padStart(16, '0');
     }
   }
 
-  // ============ MULTI-STORE BAN LIST ============
+  // ============ BAN STORES ============
   function getLocalBans() {
     try { return new Set(JSON.parse(localStorage.getItem(BAN_LIST_KEY) || '[]')); } catch(e) { return new Set(); }
   }
@@ -505,15 +529,11 @@ document.addEventListener('DOMContentLoaded', async function() {
       });
     } catch(e) {}
   }
-
   async function isBanned(fp) {
-    // Legacy flag — if anyone was banned under the old system, keep them banned
     try { if (localStorage.getItem(BAN_STORAGE) === '1') return true; } catch(e) {}
-    // Union across all stores — any match means banned
     const all = new Set([...getLocalBans(), ...getCookieBans(), ...(await getIdbBans())]);
     return all.has(fp);
   }
-
   async function addBan(fp) {
     const local  = getLocalBans();  local.add(fp);  setLocalBans(local);
     const cookie = getCookieBans(); cookie.add(fp); setCookieBans(cookie);
@@ -521,9 +541,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     try { localStorage.setItem(BAN_STORAGE, '1'); } catch(e) {}
   }
 
-  // ============ COMPUTE FINGERPRINT + BAN CHECK ============
   const myFingerprint = await generateFingerprint();
-
   if (await isBanned(myFingerprint)) {
     document.getElementById('appRoot').innerHTML =
       '<div class="ban-screen">' +
@@ -535,7 +553,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     return;
   }
 
-  // ============ WARNING COUNT (fingerprint-keyed, multi-source) ============
   function getWarnMap() {
     try { return JSON.parse(localStorage.getItem(WARN_FP_KEY) || '{}'); } catch(e) { return {}; }
   }
@@ -558,7 +575,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     return next;
   }
 
-  // ============ SERVICES & STATE ============
+  // ============ SERVICES ============
   const SERVICES = [
     { id:'root-cut',    name:'Root Color with Cut',            desc:'Root touch-up + finished haircut',                       price:165 },
     { id:'root',        name:'Root Color Only',                desc:'Touch up regrowth at the root',                          price:95 },
@@ -582,11 +599,11 @@ document.addEventListener('DOMContentLoaded', async function() {
   const TIME_BASE = 3.5;
   const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-  // ============ CACHE (analysis results) ============
   try { localStorage.removeItem('maisonhue_analysis_cache'); } catch(e) {}
   try { localStorage.removeItem('maisonhue_analysis_cache_v2'); } catch(e) {}
   try { localStorage.removeItem('maisonhue_analysis_cache_v3'); } catch(e) {}
   try { localStorage.removeItem('maisonhue_analysis_cache_v4'); } catch(e) {}
+  try { localStorage.removeItem('maisonhue_analysis_cache_v5'); } catch(e) {}
 
   async function hashPhoto(dataUrl) {
     const enc = new TextEncoder().encode(dataUrl);
@@ -613,7 +630,9 @@ document.addEventListener('DOMContentLoaded', async function() {
   function setCachedAnalysis(hash, analysis) {
     if (!hash || !analysis || !analysis.contentClass) return;
     const cache = loadCache();
-    cache[hash] = { ...analysis, _t: Date.now(), _v: CACHE_VERSION };
+    // Don't cache manual overrides — keep raw AI result so customer can re-override fresh
+    const { manuallyEdited, ...toCache } = analysis;
+    cache[hash] = { ...toCache, _t: Date.now(), _v: CACHE_VERSION };
     saveCache(cache);
   }
   function clearCache() { try { localStorage.removeItem(CACHE_STORAGE); } catch(e) {} }
@@ -730,7 +749,9 @@ document.addEventListener('DOMContentLoaded', async function() {
       d.classList.toggle('active', i === n-1);
       d.classList.toggle('done', i < n-1);
     });
-    $('backBtn').style.display = (n>1 && n!==3) ? 'block' : 'none';
+    // Back is hidden during fresh analysis on step 3; shown if already analyzed (returning from step 4)
+    const showBack = (n === 2) || (n === 3 && state.analysis) || (n === 4);
+    $('backBtn').style.display = showBack ? 'block' : 'none';
     $('nextBtn').textContent = n === 4 ? 'Start Over' : 'Continue';
     $('nextBtn').disabled = !canAdvance();
     window.scrollTo({top:0, behavior:'smooth'});
@@ -788,93 +809,94 @@ Schema:
 {
   "contentClass": "ok_hair" | "non_hair_object" | "inappropriate" | "explicit",
   "subject": "woman" | "man" | "child" | "no_person" | "unclear",
-  "objectName": "short noun phrase if the photo isn't hair (e.g. 'a tabby cat', 'a slice of pizza'). Empty string if it shows a person.",
-  "reasoning": "ONE sentence describing what landmarks you used: where the hairline starts, where the hair ends relative to chin/shoulders/back, and the density cues you observed.",
+  "objectName": "short noun phrase if the photo isn't hair (e.g. 'a tabby cat'). Empty string if it shows a person.",
+  "reasoning": "ONE sentence. MUST explicitly state: (a) is the subject showing their part to the camera? (b) is scalp visible at the part? (c) where do the lowest hair tips end relative to body landmarks?",
   "lengthLabel": "Short" | "Medium" | "Long" | "Extra Long",
   "densityLabel": "Fine" | "Medium" | "Thick",
   "faceVisible": boolean,
   "confidence": "high" | "medium" | "low",
-  "notes": "one short sentence describing what you see (used as a customer-facing note)"
+  "notes": "one short sentence describing what you see (customer-facing)"
 }
 
-=== CONTENT CLASS — decide this FIRST ===
-- "non_hair_object": animal, food, vehicle, landscape, building, screenshot, meme, drawing, cartoon, painting, or any object that isn't a real person whose hair we can quote. Anything that isn't a real human head and hair → USE THIS.
-- "inappropriate": suggestive, partial undress, lingerie, swimwear in sexual poses, gratuitously revealing clothing, or sexual poses. NOT explicit nudity but inappropriate for a salon quote app.
+=== CONTENT CLASS — decide FIRST ===
+- "non_hair_object": animal, food, vehicle, landscape, building, screenshot, meme, drawing, cartoon, painting, or any object that isn't a real person whose hair we can quote.
+- "inappropriate": suggestive, partial undress, lingerie, swimwear in sexual poses, gratuitously revealing clothing, or sexual poses.
 - "explicit": full nudity, exposed genitalia, exposed nipples, sexual acts, or pornography.
 - "ok_hair": real person, hair reasonably visible, appropriately dressed. ONLY use when none of the above apply.
 
-If non_hair_object: fill objectName with a specific friendly noun phrase. Otherwise leave it empty.
+If non_hair_object: fill objectName with a specific friendly noun phrase. Otherwise leave empty.
 
 === SUBJECT DETERMINATION (only when contentClass = "ok_hair") ===
 
-This salon serves ADULT WOMEN. Determining "subject" affects whether the customer can get a quote at all, so be GENEROUS — most customers using this app ARE adult women looking for a salon service. DEFAULT TO "woman" unless you have strong, clear evidence otherwise.
+This salon serves ADULT WOMEN. DEFAULT TO "woman" unless you have strong, clear evidence otherwise. Most customers using this app ARE adult women looking for a salon service.
 
-- "woman" — appears to be an adult female. **This is the default.** Evidence supporting "woman": long or medium hair, feminine facial features, makeup, feminine clothing or jewelry, plucked/shaped eyebrows, painted nails, a feminine name implied by context. If ANY of these are present without strong contradicting evidence, choose "woman". If the person could plausibly be a woman, choose "woman".
+- "woman" — appears to be an adult female. **This is the default.** Long or medium hair, feminine features, makeup, feminine clothing, plucked eyebrows — any of these without strong contradicting evidence = "woman". If they could plausibly be a woman, choose "woman".
+- "man" — ONLY when CLEARLY and UNAMBIGUOUSLY adult male: visible beard/mustache/stubble OR visibly masculine jawline AND short masculine haircut AND zero feminine markers.
+- "child" — ONLY when CLEARLY a minor under 16: small head/face proportions, lack of adolescent maturation, visibly elementary/middle school age. Adult women can look young — never classify as "child" based on youthful face alone.
+- "no_person" — no human visible at all.
+- "unclear" — RESERVED FOR EXTREME CASES ONLY: face fully covered, photo so dark/blurry you genuinely cannot see a person. **NEVER use "unclear" because gender is androgynous or angle is unusual. When in doubt between "woman" and "unclear", ALWAYS choose "woman".**
 
-- "man" — ONLY when the person CLEARLY and UNAMBIGUOUSLY presents as adult male. Strong evidence required: visible beard, mustache, or clear stubble; visibly masculine jawline AND short masculine haircut AND no feminine markers. If there's any reasonable chance the person is a woman with short hair, choose "woman", not "man".
-
-- "child" — ONLY when the person CLEARLY appears to be a minor (under 16). Strong evidence required: small head/face proportions, lack of adolescent maturation, visibly young (elementary/middle school age). When uncertain about age, choose "woman". Adult women can look young — do not classify someone as "child" based on a youthful face alone.
-
-- "no_person" — no human visible in the photo at all.
-
-- "unclear" — RESERVED FOR EXTREME CASES only: face fully covered (mask, hand obscuring entire face), photo so dark or blurry you genuinely cannot see a person, or extreme distance where you cannot make out features. **DO NOT use "unclear" just because gender presentation is androgynous, the angle is unusual, or you'd like more confirmation. When in doubt between "woman" and "unclear", ALWAYS choose "woman".**
-
-Critical priority: under-blocking is far better than over-blocking. A salon refusing service to an actual adult woman because the AI was overcautious is a much worse outcome than serving someone who isn't the target audience.
+Under-blocking is far better than over-blocking.
 
 === LENGTH MEASUREMENT (only when contentClass = "ok_hair") ===
 
-Anchor points on the body, from top to bottom:
-1. CHIN — bottom of the jaw
-2. NECK — between jawline and where the neck meets the shoulders (collarbone area)
-3. SHOULDERS — top of the shoulders / collarbone line
-4. MID-BACK — roughly the bra-strap line on a woman, halfway down the back
+Anchor points: CHIN → NECK → SHOULDERS → MID-BACK.
 
-Categories:
-- "Short" — the lowest tips of the hair end AT THE CHIN OR HIGHER (above the jawline). Pixie cuts, bobs cut at the jaw, ear-length cuts.
-- "Medium" — the lowest tips of the hair end BETWEEN THE NECK AND THE SHOULDERS. Lobs (long bobs), collarbone-length cuts.
-- "Long" — the lowest tips of the hair end BELOW THE SHOULDERS, down to and including the MID-BACK. Standard "long hair" — past the shoulders but not past mid-back.
-- "Extra Long" — the lowest tips of the hair end PAST THE MID-BACK. Waist-length, hip-length, or longer.
+- "Short" — lowest tips end AT CHIN OR HIGHER. Pixie cuts, jaw bobs, ear-length cuts.
+- "Medium" — lowest tips end BETWEEN NECK AND SHOULDERS. Lobs, collarbone-length.
+- "Long" — lowest tips end BELOW SHOULDERS, down to MID-BACK.
+- "Extra Long" — lowest tips PAST MID-BACK. Waist-length or longer.
 
-CRITICAL RULES for length:
-1. Measure to the LOWEST tips of the hair — not the bulk, not the average. Find where the longest visible strands end.
-2. If hair is tied up, in a bun, in a ponytail, or partially obscured: estimate where it would fall when down. State this assumption in "reasoning" and lower confidence to "medium".
-3. If hair is wet, slicked back, or extended downward by gravity in a way that exaggerates length, mentally adjust.
-4. If the photo is cropped above where the hair ends (e.g. close-up of just the face, you can't see the ends): infer from visible portion, lower confidence to "medium" or "low", note this in "reasoning".
-5. ALWAYS prefer the SHORTER category when borderline between two — this protects the customer from being overcharged.
-6. Curly, coily, or kinky hair: assess length as it appears when stretched/relaxed, NOT in its curled state. A bob on tightly coiled hair may look short but stretches to medium — judge generously toward shorter.
+Critical rules:
+1. Measure to the LOWEST tips, not the bulk.
+2. Hair tied up/in a bun: estimate where it would fall when down, lower confidence to "medium".
+3. Photo cropped above the ends: infer from visible portion, lower confidence.
+4. Borderline between two categories → choose the SHORTER one.
+5. Curly/coily: assess as stretched length, judge generously toward shorter.
 
-=== DENSITY MEASUREMENT ===
+=== DENSITY MEASUREMENT — STRUCTURED CHECKLIST (read carefully) ===
 
-Density is harder to assess than length because it requires reading texture, volume, and translucency. Be deliberately CONSERVATIVE — when in doubt, go finer. Overcharging a fine-haired customer because you guessed Medium is a worse mistake than undercharging a medium-haired customer because you guessed Fine.
+You MUST work through these questions IN ORDER. Do NOT skip to a holistic judgment. Your "reasoning" field must show that you actually answered Q1 and Q2.
 
-Categories:
-- "Fine" — scalp is clearly visible at the part, the hairline, or anywhere the hair is parted or pulled aside; individual strands are distinguishable rather than reading as a unified mass; ponytail would be thin (less than ~1.5 inches around); hair has a wispy, translucent, or see-through quality at the edges; low overall volume relative to the head and shoulders.
+**QUESTION 1 — Is the subject showing their part to the camera?**
+Signs of YES: hands in hair pulling sections apart, a clear center part facing the camera, fingers in the part, head tilted to display the scalp, a "look at my roots" pose, or any pose where the part is the focal point of the upper half of the photo.
 
-- "Medium" — scalp barely visible even at the part line; hair reads as a full, healthy mass; normal ponytail diameter (~1.5–2.5 inches around); silhouette is defined but not voluminous; no obvious translucency at the edges.
+**QUESTION 2 — If yes to Q1: is ANY scalp visible at the part?**
+Look at the actual part line. Can you see ANY skin-toned strip — pink, brown, tan, or peachy? Even a thin or partial visible strip counts as YES. CAUTION: do NOT confuse light/blonde/platinum/grey hair near the roots with scalp. But if you can see actual skin color through the hair at the part, that IS scalp.
 
-- "Thick" — NO scalp visible ANYWHERE, including at a deliberate part the subject is showing the camera; hair forms a dense, opaque, heavy mass; large ponytail diameter (~2.5+ inches around); if curly/coily, the curls are voluminous and full-bodied; hair appears to have real weight to it.
+**QUESTION 3 — If YES to Q1 AND YES to Q2: STOP.**
+**Density = "Fine". This is absolute and overrides all other signals.**
+Do NOT override this based on:
+- The overall hair looking full or healthy below the part
+- The ends or lengths looking voluminous
+- The hair forming a defined silhouette
+- The hair being styled or blown out
+A customer deliberately showing visible scalp at her part is giving you the highest-quality density signal possible. Quote what she's showing you, not what her hair "would look like" in another pose. This is the most common cause of mis-classification — do not fall for it.
 
-Density cues, in order of importance:
-1. **Scalp at the part is the single most diagnostic cue.** If you can see a clear stripe of scalp at the part, it is Fine. If only a thin line of scalp shows, it is Medium. If you genuinely cannot tell where the part is because no scalp shows through, it is Thick.
-2. **Edge translucency.** Look at the outline of the hair against the background. Fine hair has wispy, see-through edges where individual strands are visible. Thick hair has a hard, defined silhouette like a solid shape.
-3. **Strand visibility.** Can you see individual hairs, especially near the ends and edges? Fine hair shows them clearly. Thick hair reads as one unified mass.
-4. **Volume relative to the head.** Fine hair sits close to the skull. Thick hair stands away from the head with body and lift even without product.
+**QUESTION 4 — If NO to Q1 (subject is not showing their part): assess holistically:**
+1. Scalp visibility anywhere it shouldn't be (top of head, hairline, behind ear) → Fine.
+2. Edge translucency — wispy see-through edges = Fine; hard defined silhouette = Thick.
+3. Strand visibility — individual hairs visible at ends/edges = Fine; unified mass = Thick.
+4. Volume — close to skull = Fine; standing away with body = Thick.
 
-CRITICAL POSE RULE — when the subject is showing their part:
-If the subject has their hands in their hair, is pulling sections apart, has a center part facing the camera, or is otherwise deliberately showing you their scalp — TRUST WHAT YOU SEE. They are showing you because they want an accurate read. Do NOT mentally "correct" for the pose by thinking "if her hair were down naturally it would look fuller, so I'll bump it up to Medium." Quote what is in front of you. A customer showing visible scalp at her part is showing you Fine hair, period.
+Categories (used only after working through Q1–Q3):
+- "Fine" — visible scalp at the part (always), OR low-volume hair with wispy edges and visible strands.
+- "Medium" — no visible scalp at the part, full healthy mass, defined but not voluminous, no obvious thinness signals.
+- "Thick" — dense opaque mass, no scalp visible ANYWHERE including a deliberate part, large ponytail diameter, visible weight.
 
-CRITICAL BORDERLINE RULE:
-- Borderline Fine/Medium → choose Fine.
-- Borderline Medium/Thick → choose Medium.
-- Always err on the side of Fine over Thick. Always.
+**BORDERLINE RULE:**
+- Fine vs Medium → always Fine.
+- Medium vs Thick → always Medium.
+
+**IMPORTANT CONTEXT:** The customer can manually override your density assessment in the app, so a slightly-too-low estimate is recoverable in seconds. A slightly-too-high estimate causes a real cost dispute the customer is unlikely to catch. **Always bias low on density.**
 
 === FINAL CHECK ===
-Before responding, ask yourself:
-1. Did I default to "woman" rather than "unclear" for a reasonable-looking customer photo?
-2. Did I look at the LOWEST tips of the hair, not just the bulk?
-3. Did I anchor against actual body landmarks (chin, neck, shoulders, mid-back), not just rough "long vs short"?
-4. If borderline, did I pick the shorter length and the lower density?
-5. Does my "reasoning" field actually explain what I observed?
+Before responding:
+1. Did I default to "woman" rather than "unclear"?
+2. Did my reasoning field actually answer Q1 (showing part?) and Q2 (scalp visible?)?
+3. If she's showing her part and ANY scalp is visible, did I set density to Fine?
+4. Did I bias toward shorter length and lower density on borderline calls?
+5. Does my "reasoning" describe what I actually observed?
 
 Err on the side of caution: between "inappropriate" and "explicit", choose "inappropriate". Between "ok_hair" and "inappropriate" with normal clothing, choose "ok_hair".`;
 
@@ -888,7 +910,7 @@ Err on the side of caution: between "inappropriate" and "explicit", choose "inap
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-5',
-        max_tokens: 600,
+        max_tokens: 700,
         temperature: 0,
         messages: [{
           role: 'user',
@@ -910,11 +932,9 @@ Err on the side of caution: between "inappropriate" and "explicit", choose "inap
     const parsed = JSON.parse(cleaned);
     const contentClass = parsed.contentClass || 'ok_hair';
     const subject = parsed.subject || 'woman';
-    // "unclear" subject is now treated as allowed — they're not a man/child/no_person
     const allowed = contentClass === 'ok_hair' && subject !== 'man' && subject !== 'child' && subject !== 'no_person';
     return {
-      contentClass,
-      subject,
+      contentClass, subject,
       objectName: parsed.objectName || '',
       reasoning: parsed.reasoning || '',
       lengthLabel: parsed.lengthLabel,
@@ -1024,7 +1044,10 @@ Err on the side of caution: between "inappropriate" and "explicit", choose "inap
       $('fTimeRow').style.display = 'none';
     }
     const badge = $('aiBadge');
-    if (a.cached) {
+    if (a.manuallyEdited) {
+      badge.textContent = '✎ Adjusted by you';
+      badge.className = 'ai-badge edited';
+    } else if (a.cached) {
       badge.textContent = '✦ Saved result · same photo, same quote';
       badge.className = 'ai-badge cached';
     } else if (a.source === 'claude') {
@@ -1035,20 +1058,55 @@ Err on the side of caution: between "inappropriate" and "explicit", choose "inap
       badge.className = 'ai-badge local';
     }
     const note = $('aiNote');
-    if (a.notes) note.textContent = '"' + a.notes + '"';
+    if (a.manuallyEdited) note.textContent = '';
+    else if (a.notes) note.textContent = '"' + a.notes + '"';
     else if (a.source === 'local') note.textContent = 'Add an Anthropic API key in Settings (⚙) for accurate AI vision analysis.';
     else note.textContent = '';
   }
 
+  function refreshAdjustChips() {
+    const a = state.analysis;
+    if (!a) return;
+    document.querySelectorAll('#lengthChips .adjust-chip').forEach(c => {
+      c.classList.toggle('selected', c.dataset.value === a.lengthLabel);
+    });
+    document.querySelectorAll('#densityChips .adjust-chip').forEach(c => {
+      c.classList.toggle('selected', c.dataset.value === a.densityLabel);
+    });
+  }
+
+  $('adjustToggle').addEventListener('click', () => {
+    const panel = $('adjustPanel');
+    const isShown = panel.style.display === 'block';
+    panel.style.display = isShown ? 'none' : 'block';
+    $('adjustToggle').textContent = isShown ? "Doesn't match? Adjust ↓" : "Hide adjustments ↑";
+    if (!isShown) refreshAdjustChips();
+  });
+
+  document.querySelectorAll('#lengthChips .adjust-chip').forEach(c => {
+    c.addEventListener('click', () => {
+      if (!state.analysis) return;
+      if (state.analysis.lengthLabel === c.dataset.value) return;
+      state.analysis.lengthLabel = c.dataset.value;
+      state.analysis.manuallyEdited = true;
+      refreshAdjustChips();
+      updateFindings();
+    });
+  });
+  document.querySelectorAll('#densityChips .adjust-chip').forEach(c => {
+    c.addEventListener('click', () => {
+      if (!state.analysis) return;
+      if (state.analysis.densityLabel === c.dataset.value) return;
+      state.analysis.densityLabel = c.dataset.value;
+      state.analysis.manuallyEdited = true;
+      refreshAdjustChips();
+      updateFindings();
+    });
+  });
+
   function cheekyObjectMessage(objectName) {
     const obj = (objectName || '').trim();
-    if (!obj) {
-      return {
-        title: "Well, that's <em>not hair</em>",
-        body: "We weren't quite sure what you sent us, but we're confident it doesn't have a scalp. Mind giving it another go with an actual hair photo?",
-        icon: "?"
-      };
-    }
+    if (!obj) return { title: "Well, that's <em>not hair</em>", body: "We weren't quite sure what you sent us, but we're confident it doesn't have a scalp. Mind giving it another go with an actual hair photo?", icon: "?" };
     const lower = obj.toLowerCase();
     let zinger;
     if (/\b(cat|dog|puppy|kitten|hamster|guinea pig|bird|rabbit|bunny|pet|fish|lizard|snake|parrot|horse|cow|chicken)\b/.test(lower)) {
@@ -1066,39 +1124,23 @@ Err on the side of caution: between "inappropriate" and "explicit", choose "inap
     } else {
       zinger = `Look, we're not going to lie — ${obj} is a choice. But it's also not hair.`;
     }
-    return {
-      title: "That's <em>not hair</em>",
-      body: zinger + " Could you upload a clear photo of the actual hair you'd like quoted?",
-      icon: "?"
-    };
+    return { title: "That's <em>not hair</em>", body: zinger + " Could you upload a clear photo of the actual hair you'd like quoted?", icon: "?" };
   }
 
   function genderMessage(subject) {
     switch (subject) {
-      case 'man':
-        return { title: "A little <em>note from us</em>", body: "Thank you so much for stopping by — Maison Hue is a women's color salon, so we're not currently set up to serve men's services. We'd love to help if you're booking for a woman in your life; just upload her photo instead.", icon: "✿" };
-      case 'child':
-        return { title: "A little <em>note from us</em>", body: "Thank you for visiting! Our color services are designed for adult women, so we're not able to quote services for minors through this app. Please get in touch with the salon directly if you have questions.", icon: "✿" };
-      case 'no_person':
-        return { title: "A little <em>note from us</em>", body: "We couldn't find a face in this photo. To give you an accurate quote, please upload a clear, well-lit photo of the woman receiving the service.", icon: "✿" };
-      default:
-        return { title: "A little <em>note from us</em>", body: "We had trouble reading this photo. Could you try a brighter, front-facing photo with the hair fully visible? It helps us give you the most accurate quote.", icon: "✿" };
+      case 'man':       return { title: "A little <em>note from us</em>", body: "Thank you so much for stopping by — Maison Hue is a women's color salon, so we're not currently set up to serve men's services. We'd love to help if you're booking for a woman in your life; just upload her photo instead.", icon: "✿" };
+      case 'child':     return { title: "A little <em>note from us</em>", body: "Thank you for visiting! Our color services are designed for adult women, so we're not able to quote services for minors through this app. Please get in touch with the salon directly if you have questions.", icon: "✿" };
+      case 'no_person': return { title: "A little <em>note from us</em>", body: "We couldn't find a face in this photo. To give you an accurate quote, please upload a clear, well-lit photo of the woman receiving the service.", icon: "✿" };
+      default:          return { title: "A little <em>note from us</em>", body: "We had trouble reading this photo. Could you try a brighter, front-facing photo with the hair fully visible? It helps us give you the most accurate quote.", icon: "✿" };
     }
   }
 
   function inappropriateMessage(warningCount) {
     if (warningCount === 1) {
-      return {
-        title: "Let's keep it <em>salon-appropriate</em>",
-        body: "Hey there — we noticed the photo you uploaded isn't quite right for a professional salon quote. No harm done; just please send a regular, fully-clothed photo with the hair clearly visible. <strong>Heads up:</strong> repeated uploads of inappropriate content will result in losing access to this tool.",
-        icon: "!"
-      };
+      return { title: "Let's keep it <em>salon-appropriate</em>", body: "Hey there — we noticed the photo you uploaded isn't quite right for a professional salon quote. No harm done; just please send a regular, fully-clothed photo with the hair clearly visible. <strong>Heads up:</strong> repeated uploads of inappropriate content will result in losing access to this tool.", icon: "!" };
     }
-    return {
-      title: "Final <em>warning</em>",
-      body: "This is the second time inappropriate content has been uploaded from this device. Please understand — this is a tool for booking professional hair services, and we need to keep it that way. <strong>One more inappropriate upload and access to Maison Hue will be permanently revoked from this device.</strong>",
-      icon: "!"
-    };
+    return { title: "Final <em>warning</em>", body: "This is the second time inappropriate content has been uploaded from this device. Please understand — this is a tool for booking professional hair services, and we need to keep it that way. <strong>One more inappropriate upload and access to Maison Hue will be permanently revoked from this device.</strong>", icon: "!" };
   }
 
   function showGentleStop(opts) {
@@ -1146,6 +1188,24 @@ Err on the side of caution: between "inappropriate" and "explicit", choose "inap
   });
 
   async function runAnalysis() {
+    // Reset adjust panel state
+    $('adjustPanel').style.display = 'none';
+    $('adjustToggle').textContent = "Doesn't match? Adjust ↓";
+
+    // If we already have a valid result (returning to step 3 from step 4), just re-show
+    if (state.analysis && state.analysis.allowed !== false) {
+      if (state.photo) $('analyzeImg').src = state.photo;
+      $('analyzeStage').style.display = 'none';
+      $('gentleStop').style.display = 'none';
+      const f = $('findings');
+      f.style.display = 'block';
+      f.classList.add('reveal');
+      updateFindings();
+      refreshAdjustChips();
+      $('nextBtn').disabled = false;
+      return;
+    }
+
     if (state.photo) $('analyzeImg').src = state.photo;
     $('analyzeStage').style.display = 'flex';
     $('findings').style.display = 'none';
@@ -1194,37 +1254,26 @@ Err on the side of caution: between "inappropriate" and "explicit", choose "inap
 
   async function handlePostAnalysis(fromCache) {
     const a = state.analysis;
-
-    if (a.contentClass === 'explicit') {
-      await triggerBan();
-      return;
-    }
-
+    if (a.contentClass === 'explicit') { await triggerBan(); return; }
     if (a.contentClass === 'inappropriate') {
       const warningCount = fromCache ? Math.max(1, getWarningCount()) : incrementWarning();
-      if (warningCount >= 3) {
-        await triggerBan();
-        return;
-      }
+      if (warningCount >= 3) { await triggerBan(); return; }
       const msg = inappropriateMessage(warningCount);
       showGentleStop({ title: msg.title, body: msg.body, icon: msg.icon, kind: 'warn' });
       return;
     }
-
     if (a.contentClass === 'non_hair_object') {
       const msg = cheekyObjectMessage(a.objectName);
       showGentleStop({ title: msg.title, body: msg.body, icon: msg.icon, kind: 'cheeky' });
       return;
     }
-
-    // Only block on man, child, or no_person. "unclear" passes through.
     if (a.contentClass === 'ok_hair' && (a.subject === 'man' || a.subject === 'child' || a.subject === 'no_person')) {
       const msg = genderMessage(a.subject);
       showGentleStop({ title: msg.title, body: msg.body, icon: msg.icon });
       return;
     }
-
     updateFindings();
+    refreshAdjustChips();
     $('analyzeStage').style.display = 'none';
     const f = $('findings');
     f.style.display = 'block';
@@ -1236,7 +1285,6 @@ Err on the side of caution: between "inappropriate" and "explicit", choose "inap
     const adj = calcAdjustments();
     const total = calcTotal();
     const totalStr = Math.round(total).toLocaleString();
-
     $('finalAmt').textContent = totalStr;
     $('finalAmt2').textContent = totalStr;
 
@@ -1248,12 +1296,22 @@ Err on the side of caution: between "inappropriate" and "explicit", choose "inap
       $('quoteFoot').style.display = 'none';
     }
 
+    const confEl = $('profileConfidence');
     if (state.analysis && state.analysis.lengthLabel) {
       $('chipLength').textContent = state.analysis.lengthLabel;
       $('chipDensity').textContent = state.analysis.densityLabel;
-      const conf = (state.analysis.confidence || 'high');
-      const confLabel = conf.charAt(0).toUpperCase() + conf.slice(1) + ' confidence';
-      $('profileConfidence').textContent = state.analysis.source === 'local' ? 'Local estimate' : confLabel;
+      let confLabel;
+      confEl.classList.remove('edited');
+      if (state.analysis.manuallyEdited) {
+        confLabel = 'Adjusted by you';
+        confEl.classList.add('edited');
+      } else if (state.analysis.source === 'local') {
+        confLabel = 'Local estimate';
+      } else {
+        const conf = (state.analysis.confidence || 'high');
+        confLabel = conf.charAt(0).toUpperCase() + conf.slice(1) + ' confidence';
+      }
+      confEl.textContent = confLabel;
       $('profileCard').style.display = 'block';
     } else {
       $('profileCard').style.display = 'none';
@@ -1305,7 +1363,6 @@ Err on the side of caution: between "inappropriate" and "explicit", choose "inap
       }
       html += '</div>';
     }
-
     $('quoteBreakdown').innerHTML = html;
   }
 
@@ -1319,11 +1376,9 @@ Err on the side of caution: between "inappropriate" and "explicit", choose "inap
     if (adj.extraCost > 0) lines.push(`• Extra color · ${adj.extraOz} oz: +${fmt(adj.extraCost)}`);
     if (adj.timeCost > 0)  lines.push(`• Extra time · ${fmtHr(adj.timeHours)} hr @ $${HOURLY}/hr: +${fmt(adj.timeCost)}`);
     const profile = state.analysis && state.analysis.lengthLabel
-      ? `\n\nHair profile: ${state.analysis.lengthLabel} length, ${state.analysis.densityLabel} density.`
+      ? `\n\nHair profile: ${state.analysis.lengthLabel} length, ${state.analysis.densityLabel} density${state.analysis.manuallyEdited ? ' (adjusted by customer)' : ''}.`
       : '';
-    const timeLine = adj.timeBased
-      ? `\nApproximate time at salon: ${fmtHr(TIME_BASE + adj.timeHours)} hr`
-      : '';
+    const timeLine = adj.timeBased ? `\nApproximate time at salon: ${fmtHr(TIME_BASE + adj.timeHours)} hr` : '';
     return `Maison Hue · Color Quote\n\n${lines.join('\n')}\n\nTotal estimate: ${fmt(calcTotal())}${timeLine}${profile}\n\nNon-binding estimate. Final price determined at the chair.`;
   }
 
@@ -1345,10 +1400,8 @@ Err on the side of caution: between "inappropriate" and "explicit", choose "inap
     if (navigator.share) {
       try { await navigator.share({ title: 'Maison Hue Color Quote', text }); } catch (e) {}
     } else if (navigator.clipboard) {
-      try {
-        await navigator.clipboard.writeText(text);
-        flashGhostAction('saveQuoteBtn', 'Copied ✓', 'Quote on your clipboard');
-      } catch (e) { alert(text); }
+      try { await navigator.clipboard.writeText(text); flashGhostAction('saveQuoteBtn', 'Copied ✓', 'Quote on your clipboard'); }
+      catch (e) { alert(text); }
     } else { alert(text); }
   });
 
@@ -1374,7 +1427,9 @@ Err on the side of caution: between "inappropriate" and "explicit", choose "inap
     }
   });
   $('backBtn').addEventListener('click', function() {
-    if (state.step > 1) setStep(state.step === 4 ? 2 : state.step - 1);
+    if (state.step === 4) setStep(3);          // step 4 → step 3 (adjust if needed)
+    else if (state.step === 3) setStep(2);     // step 3 → step 2 (retake photo)
+    else if (state.step > 1) setStep(state.step - 1);
   });
 
   renderCards(SERVICES, $('services'), state.services);
