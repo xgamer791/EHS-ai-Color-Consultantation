@@ -428,9 +428,12 @@ document.addEventListener('DOMContentLoaded', async function() {
   const BAN_DB_STORE      = 'bans';
   const WARN_FP_KEY       = 'maisonhue_warn_counts';
   const WARN_STORAGE      = 'maisonhue_inappropriate_warnings';
-  const KEY_STORAGE       = 'maisonhue_anthropic_key';
-  const CACHE_VERSION     = 6;
-  const CACHE_STORAGE     = 'maisonhue_analysis_cache_v6';
+  const CACHE_VERSION     = 7;
+  const CACHE_STORAGE     = 'maisonhue_analysis_cache_v7';
+  // The AI scan (DeepSeek, the only AI used): the photo goes to the salon's
+  // site, which holds the key and asks DeepSeek. No key is ever in this page.
+  const SCAN_URL          = 'https://envyhairstudiotx.com/wp-json/envy/v1/hair-scan';
+  const SCAN_TIMEOUT_MS   = 30000;
   const CACHE_MAX_ENTRIES = 30;
 
   // ============ FINGERPRINT ============
@@ -612,6 +615,9 @@ document.addEventListener('DOMContentLoaded', async function() {
   try { localStorage.removeItem('maisonhue_analysis_cache_v3'); } catch(e) {}
   try { localStorage.removeItem('maisonhue_analysis_cache_v4'); } catch(e) {}
   try { localStorage.removeItem('maisonhue_analysis_cache_v5'); } catch(e) {}
+  try { localStorage.removeItem('maisonhue_analysis_cache_v6'); } catch(e) {}
+  // A key saved on this device by the old settings panel: removed (DeepSeek only, on the salon's server).
+  try { localStorage.removeItem('maisonhue_anthropic_key'); } catch(e) {}
 
   async function hashPhoto(dataUrl) {
     const enc = new TextEncoder().encode(dataUrl);
@@ -779,139 +785,33 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
   }
 
-  async function analyzeWithClaude(dataUrl, apiKey) {
+  async function analyzeWithAI(dataUrl) {
     const downscaled = await downscaleImage(dataUrl, 1568);
-    const base64 = downscaled.split(',')[1];
-
-    const prompt = `You are a professional hair stylist's AI assistant performing a precise visual hair assessment for a women's-only color salon. Accuracy directly determines the customer's quoted price, so be careful and methodical.
-
-Respond with ONLY a single JSON object — no preamble, no markdown, no code fences.
-
-Schema:
-{
-  "contentClass": "ok_hair" | "non_hair_object" | "inappropriate" | "explicit",
-  "subject": "woman" | "man" | "child" | "no_person" | "unclear",
-  "objectName": "short noun phrase if the photo isn't hair (e.g. 'a tabby cat'). Empty string if it shows a person.",
-  "reasoning": "ONE sentence. MUST explicitly state: (a) is the subject showing their part to the camera? (b) is scalp visible at the part? (c) where do the lowest hair tips end relative to body landmarks?",
-  "lengthLabel": "Short" | "Medium" | "Long" | "Extra Long",
-  "densityLabel": "Fine" | "Medium" | "Thick",
-  "faceVisible": boolean,
-  "confidence": "high" | "medium" | "low",
-  "notes": "one short sentence describing what you see (customer-facing)"
-}
-
-=== CONTENT CLASS — decide FIRST ===
-- "non_hair_object": animal, food, vehicle, landscape, building, screenshot, meme, drawing, cartoon, painting, or any object that isn't a real person whose hair we can quote.
-- "inappropriate": suggestive, partial undress, lingerie, swimwear in sexual poses, gratuitously revealing clothing, or sexual poses.
-- "explicit": full nudity, exposed genitalia, exposed nipples, sexual acts, or pornography.
-- "ok_hair": real person, hair reasonably visible, appropriately dressed. ONLY use when none of the above apply.
-
-If non_hair_object: fill objectName with a specific friendly noun phrase. Otherwise leave empty.
-
-=== SUBJECT DETERMINATION (only when contentClass = "ok_hair") ===
-
-This salon serves ADULT WOMEN. DEFAULT TO "woman" unless you have strong, clear evidence otherwise. Most customers using this app ARE adult women looking for a salon service.
-
-- "woman" — appears to be an adult female. **This is the default.** Long or medium hair, feminine features, makeup, feminine clothing, plucked eyebrows — any of these without strong contradicting evidence = "woman". If they could plausibly be a woman, choose "woman".
-- "man" — ONLY when CLEARLY and UNAMBIGUOUSLY adult male: visible beard/mustache/stubble OR visibly masculine jawline AND short masculine haircut AND zero feminine markers.
-- "child" — ONLY when CLEARLY a minor under 16: small head/face proportions, lack of adolescent maturation, visibly elementary/middle school age. Adult women can look young — never classify as "child" based on youthful face alone.
-- "no_person" — no human visible at all.
-- "unclear" — RESERVED FOR EXTREME CASES ONLY: face fully covered, photo so dark/blurry you genuinely cannot see a person. **NEVER use "unclear" because gender is androgynous or angle is unusual. When in doubt between "woman" and "unclear", ALWAYS choose "woman".**
-
-Under-blocking is far better than over-blocking.
-
-=== LENGTH MEASUREMENT (only when contentClass = "ok_hair") ===
-
-Anchor points: CHIN → NECK → SHOULDERS → MID-BACK.
-
-- "Short" — lowest tips end AT CHIN OR HIGHER. Pixie cuts, jaw bobs, ear-length cuts.
-- "Medium" — lowest tips end BETWEEN NECK AND SHOULDERS. Lobs, collarbone-length.
-- "Long" — lowest tips end BELOW SHOULDERS, down to MID-BACK.
-- "Extra Long" — lowest tips PAST MID-BACK. Waist-length or longer.
-
-Critical rules:
-1. Measure to the LOWEST tips, not the bulk.
-2. Hair tied up/in a bun: estimate where it would fall when down, lower confidence to "medium".
-3. Photo cropped above the ends: infer from visible portion, lower confidence.
-4. Borderline between two categories → choose the SHORTER one.
-5. Curly/coily: assess as stretched length, judge generously toward shorter.
-
-=== DENSITY MEASUREMENT — STRUCTURED CHECKLIST (read carefully) ===
-
-You MUST work through these questions IN ORDER. Do NOT skip to a holistic judgment. Your "reasoning" field must show that you actually answered Q1 and Q2.
-
-**QUESTION 1 — Is the subject showing their part to the camera?**
-Signs of YES: hands in hair pulling sections apart, a clear center part facing the camera, fingers in the part, head tilted to display the scalp, a "look at my roots" pose, or any pose where the part is the focal point of the upper half of the photo.
-
-**QUESTION 2 — If yes to Q1: is ANY scalp visible at the part?**
-Look at the actual part line. Can you see ANY skin-toned strip — pink, brown, tan, or peachy? Even a thin or partial visible strip counts as YES. CAUTION: do NOT confuse light/blonde/platinum/grey hair near the roots with scalp. But if you can see actual skin color through the hair at the part, that IS scalp.
-
-**QUESTION 3 — If YES to Q1 AND YES to Q2: STOP.**
-**Density = "Fine". This is absolute and overrides all other signals.**
-Do NOT override this based on:
-- The overall hair looking full or healthy below the part
-- The ends or lengths looking voluminous
-- The hair forming a defined silhouette
-- The hair being styled or blown out
-A customer deliberately showing visible scalp at her part is giving you the highest-quality density signal possible. Quote what she's showing you, not what her hair "would look like" in another pose. This is the most common cause of mis-classification — do not fall for it.
-
-**QUESTION 4 — If NO to Q1 (subject is not showing their part): assess holistically:**
-1. Scalp visibility anywhere it shouldn't be (top of head, hairline, behind ear) → Fine.
-2. Edge translucency — wispy see-through edges = Fine; hard defined silhouette = Thick.
-3. Strand visibility — individual hairs visible at ends/edges = Fine; unified mass = Thick.
-4. Volume — close to skull = Fine; standing away with body = Thick.
-
-Categories (used only after working through Q1–Q3):
-- "Fine" — visible scalp at the part (always), OR low-volume hair with wispy edges and visible strands.
-- "Medium" — no visible scalp at the part, full healthy mass, defined but not voluminous, no obvious thinness signals.
-- "Thick" — dense opaque mass, no scalp visible ANYWHERE including a deliberate part, large ponytail diameter, visible weight.
-
-**BORDERLINE RULE:**
-- Fine vs Medium → always Fine.
-- Medium vs Thick → always Medium.
-
-**IMPORTANT CONTEXT:** The customer can manually override your density assessment in the app, so a slightly-too-low estimate is recoverable in seconds. A slightly-too-high estimate causes a real cost dispute the customer is unlikely to catch. **Always bias low on density.**
-
-=== FINAL CHECK ===
-Before responding:
-1. Did I default to "woman" rather than "unclear"?
-2. Did my reasoning field actually answer Q1 (showing part?) and Q2 (scalp visible?)?
-3. If she's showing her part and ANY scalp is visible, did I set density to Fine?
-4. Did I bias toward shorter length and lower density on borderline calls?
-5. Does my "reasoning" describe what I actually observed?
-
-Err on the side of caution: between "inappropriate" and "explicit", choose "inappropriate". Between "ok_hair" and "inappropriate" with normal clothing, choose "ok_hair".`;
-
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-5',
-        max_tokens: 700,
-        temperature: 0,
-        messages: [{
-          role: 'user',
-          content: [
-            { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: base64 } },
-            { type: 'text', text: prompt }
-          ]
-        }]
-      })
-    });
-    if (!response.ok) {
-      let msg = 'API request failed';
-      try { const err = await response.json(); msg = err.error?.message || msg; } catch(e) {}
-      throw new Error(msg);
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), SCAN_TIMEOUT_MS);
+    let response;
+    try {
+      // text/plain keeps it a simple request: no CORS preflight.
+      response = await fetch(SCAN_URL, {
+        method: 'POST',
+        headers: { 'content-type': 'text/plain' },
+        body: JSON.stringify({ image: downscaled }),
+        signal: ctrl.signal,
+      });
+    } finally {
+      clearTimeout(timer);
     }
-    const data = await response.json();
-    const text = (data.content[0]?.text || '').trim();
-    const cleaned = text.replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/\s*```$/, '');
-    const parsed = JSON.parse(cleaned);
+    if (!response.ok) {
+      let code = String(response.status);
+      try { code = (await response.json()).error || code; } catch(e) {}
+      throw new Error('AI scan unavailable (' + code + ')');
+    }
+    const parsed = await response.json();
+    // Only lengths and densities the quote prices; anything else → on-device.
+    if ((parsed.contentClass || 'ok_hair') === 'ok_hair' &&
+        (!['Short', 'Medium', 'Long', 'Extra Long'].includes(parsed.lengthLabel) || !['Fine', 'Medium', 'Thick'].includes(parsed.densityLabel))) {
+      throw new Error('AI scan answer not usable');
+    }
     const contentClass = parsed.contentClass || 'ok_hair';
     const subject = parsed.subject || 'woman';
     const allowed = contentClass === 'ok_hair' && subject !== 'man' && subject !== 'child' && subject !== 'no_person';
@@ -924,7 +824,7 @@ Err on the side of caution: between "inappropriate" and "explicit", choose "inap
       faceVisible: parsed.faceVisible,
       confidence: parsed.confidence,
       notes: parsed.notes,
-      source: 'claude',
+      source: 'ai',
       allowed
     };
   }
@@ -1033,8 +933,8 @@ Err on the side of caution: between "inappropriate" and "explicit", choose "inap
     } else if (a.cached) {
       badge.textContent = '✦ Saved result · same photo, same quote';
       badge.className = 'ai-badge cached';
-    } else if (a.source === 'claude') {
-      badge.textContent = '✦ Claude Sonnet · ' + (a.confidence || 'high') + ' confidence';
+    } else if (a.source === 'ai') {
+      badge.textContent = '✦ AI scan · ' + (a.confidence || 'high') + ' confidence';
       badge.className = 'ai-badge vision';
     } else {
       badge.textContent = 'Local detection · low accuracy';
@@ -1208,25 +1108,19 @@ Err on the side of caution: between "inappropriate" and "explicit", choose "inap
       return;
     }
 
-    const apiKey = localStorage.getItem(KEY_STORAGE);
     const analysisPromise = (async () => {
-      if (apiKey) {
-        try { return await analyzeWithClaude(state.photo, apiKey); }
-        catch (err) {
-          console.warn('Claude analysis failed, falling back to local:', err);
-          const local = await analyzeLocally(state.photo);
-          local.notes = 'Claude vision failed (' + err.message + '). Using local detection.';
-          return local;
-        }
+      try { return await analyzeWithAI(state.photo); }
+      catch (err) {
+        console.warn('AI scan failed, using on-device detection:', err);
+        return await analyzeLocally(state.photo);
       }
-      return await analyzeLocally(state.photo);
     })();
 
     const animationPromise = runAnimation(STAGES);
     const [analysis] = await Promise.all([analysisPromise, animationPromise]);
     state.analysis = analysis;
 
-    if (analysis.source === 'claude' && analysis.contentClass) {
+    if (analysis.source === 'ai' && analysis.contentClass) {
       setCachedAnalysis(state.photoHash, analysis);
     }
 
