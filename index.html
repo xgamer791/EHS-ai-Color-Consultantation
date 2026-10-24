@@ -174,12 +174,26 @@
   .ghost-action-hint{font-size:.8125rem;color:var(--mute)}
   .disclaimer{max-width:62ch;margin-top:24px;font-size:.8125rem;color:var(--mute);line-height:1.55}
 
+  /* The scan is off (no DeepSeek key on the site): no photo, no scan, no estimate */
+  .scan-off{display:none;padding:24px;margin-bottom:24px;border:1.5px solid var(--ivory)}
+  .app.scan-is-off .scan-off{display:block}
+  .app.scan-is-off .photo-options,.app.scan-is-off .photo-tip,.app.scan-is-off .photo-preview{display:none!important}
+  .scan-off-title{margin-bottom:8px;font-family:var(--f-display);font-weight:400;text-transform:uppercase;font-size:clamp(1.5rem,6vw,2rem);line-height:1}
+  .scan-off-body{max-width:56ch;margin-bottom:20px;font-size:.9375rem;color:var(--mute);line-height:1.6}
+  .scan-off-actions{display:flex;flex-wrap:wrap;gap:12px}
+  .gentle-stop-body a{color:var(--ivory);text-underline-offset:.2em}
+
+  /* The estimate under a finished scan */
+  .finding-total{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-top:-1.5px;padding:16px 0 4px;border-top:1.5px solid var(--ivory)}
+  .finding-total span{font-size:.75rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase}
+  .finding-total strong{font-family:var(--f-display);font-weight:400;font-size:2.5rem;line-height:1}
+
   /* Buttons: one square style, as on the site */
-  button.btn,.gentle-stop-actions button{display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 24px;border:1.5px solid var(--ivory);border-radius:0;font-size:.8125rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;transition:background .2s,color .2s,border-color .2s}
-  button.btn-primary,.gentle-stop-actions .primary{background:var(--ivory);color:var(--ink)}
-  button.btn-primary:hover:not(:disabled),.gentle-stop-actions .primary:hover{background:#fff;border-color:#fff}
-  button.btn-ghost,.gentle-stop-actions .ghost{border-color:var(--line);color:var(--ivory)}
-  button.btn-ghost:hover,.gentle-stop-actions .ghost:hover{border-color:var(--ivory)}
+  button.btn,.gentle-stop-actions button,.scan-off-actions a{display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 24px;border:1.5px solid var(--ivory);border-radius:0;font-size:.8125rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;transition:background .2s,color .2s,border-color .2s}
+  button.btn-primary,.gentle-stop-actions .primary,.scan-off-actions .primary{background:var(--ivory);color:var(--ink);text-decoration:none}
+  button.btn-primary:hover:not(:disabled),.gentle-stop-actions .primary:hover,.scan-off-actions .primary:hover{background:#fff;border-color:#fff}
+  button.btn-ghost,.gentle-stop-actions .ghost,.scan-off-actions .ghost{border-color:var(--line);color:var(--ivory);text-decoration:none}
+  button.btn-ghost:hover,.gentle-stop-actions .ghost:hover,.scan-off-actions .ghost:hover{border-color:var(--ivory)}
   button.btn-primary:disabled{background:transparent;border-color:var(--line);color:var(--mute);cursor:not-allowed}
 
   /* The bar along the bottom */
@@ -239,6 +253,14 @@
           <p class="step-desc">Select one or more services.</p>
         </div>
         <div class="step-body">
+          <div class="scan-off" role="status">
+            <div class="scan-off-title">The photo scan is off</div>
+            <p class="scan-off-body">The AI scan that reads your hair isn't switched on yet, so this page can't make an estimate. Call or text Holly for a quote.</p>
+            <div class="scan-off-actions">
+              <a class="primary" href="tel:+12109005003">Call (210) 900-5003</a>
+              <a class="ghost" href="sms:+12109005003">Text instead</a>
+            </div>
+          </div>
           <div class="card-list" id="services"></div>
         </div>
       </div>
@@ -252,6 +274,14 @@
           <p class="step-desc">A clear photo lets the AI estimate your length, density and how much color you'll need, so you don't have to guess.</p>
         </div>
         <div class="step-body">
+          <div class="scan-off" role="status">
+            <div class="scan-off-title">The photo scan is off</div>
+            <p class="scan-off-body">The AI scan that reads your hair isn't switched on yet, so this page can't make an estimate. Call or text Holly for a quote.</p>
+            <div class="scan-off-actions">
+              <a class="primary" href="tel:+12109005003">Call (210) 900-5003</a>
+              <a class="ghost" href="sms:+12109005003">Text instead</a>
+            </div>
+          </div>
           <div class="photo-options" id="photoOptions">
             <label class="photo-option">
               <input type="file" id="cameraInput" accept="image/*" capture="user">
@@ -307,6 +337,7 @@
             <div class="finding-row"><span>Density / thickness</span><span id="fDensity">—</span></div>
             <div class="finding-row" id="fOzRow"><span>Extra color needed</span><span id="fOz">—</span></div>
             <div class="finding-row" id="fTimeRow"><span>Time-based adjustment</span><span id="fTime">—</span></div>
+            <div class="finding-total"><span>Estimated total</span><strong id="fTotal">—</strong></div>
             <div class="ai-note" id="aiNote"></div>
 
             <div class="adjust-link">
@@ -434,6 +465,7 @@ document.addEventListener('DOMContentLoaded', async function() {
   // site, which holds the key and asks DeepSeek. No key is ever in this page.
   const SCAN_URL          = 'https://envyhairstudiotx.com/wp-json/envy/v1/hair-scan';
   const SCAN_TIMEOUT_MS   = 30000;
+  let scanOff = false;   // no DeepSeek key on the site: see setScanOff()
   const CACHE_MAX_ENTRIES = 30;
 
   // ============ FINGERPRINT ============
@@ -720,6 +752,7 @@ document.addEventListener('DOMContentLoaded', async function() {
   }
   function calcTotal() { return calcSubtotal() + calcAdjustments().total; }
   function canAdvance() {
+    if (scanOff && state.step < 4) return false;
     if (state.step === 1) return state.services.size > 0;
     if (state.step === 2) return !!state.photo;
     if (state.step === 3) return !!state.analysis && state.analysis.allowed !== false;
@@ -785,6 +818,12 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
   }
 
+  function scanError(code) {
+    const err = new Error('AI scan failed (' + code + ')');
+    err.code = code;
+    return err;
+  }
+
   async function analyzeWithAI(dataUrl) {
     const downscaled = await downscaleImage(dataUrl, 1568);
     const ctrl = new AbortController();
@@ -798,19 +837,21 @@ document.addEventListener('DOMContentLoaded', async function() {
         body: JSON.stringify({ image: downscaled }),
         signal: ctrl.signal,
       });
+    } catch (e) {
+      throw scanError(e.name === 'AbortError' ? 'timeout' : 'network');
     } finally {
       clearTimeout(timer);
     }
     if (!response.ok) {
       let code = String(response.status);
       try { code = (await response.json()).error || code; } catch(e) {}
-      throw new Error('AI scan unavailable (' + code + ')');
+      throw scanError(code);
     }
     const parsed = await response.json();
     // Only lengths and densities the quote prices; anything else → on-device.
     if ((parsed.contentClass || 'ok_hair') === 'ok_hair' &&
         (!['Short', 'Medium', 'Long', 'Extra Long'].includes(parsed.lengthLabel) || !['Fine', 'Medium', 'Thick'].includes(parsed.densityLabel))) {
-      throw new Error('AI scan answer not usable');
+      throw scanError('unreadable');
     }
     const contentClass = parsed.contentClass || 'ok_hair';
     const subject = parsed.subject || 'woman';
@@ -827,61 +868,6 @@ document.addEventListener('DOMContentLoaded', async function() {
       source: 'ai',
       allowed
     };
-  }
-
-  function analyzeLocally(dataUrl) {
-    return new Promise(resolve => {
-      const img = new Image();
-      img.onload = () => {
-        const W = 160, H = Math.round(160 * (img.height/img.width));
-        const c = document.createElement('canvas');
-        c.width = W; c.height = H;
-        const ctx = c.getContext('2d');
-        ctx.drawImage(img, 0, 0, W, H);
-        const data = ctx.getImageData(0, 0, W, H).data;
-        let skinTop = H, skinBottom = -1, skinCount = 0;
-        let darkPx = 0, totalPx = 0, lastDarkRow = 0;
-        const isSkin = (r,g,b) => r>95 && g>40 && b>20 && Math.max(r,g,b)-Math.min(r,g,b)>15 && Math.abs(r-g)>15 && r>g && r>b;
-        for (let y = 0; y < H; y++) {
-          for (let x = 0; x < W; x++) {
-            const i = (y*W + x)*4;
-            const r = data[i], g = data[i+1], b = data[i+2];
-            const lum = r*0.299 + g*0.587 + b*0.114;
-            totalPx++;
-            if (lum < 110) { darkPx++; if (y > lastDarkRow) lastDarkRow = y; }
-            if (isSkin(r,g,b)) {
-              skinCount++;
-              if (y < skinTop) skinTop = y;
-              if (y > skinBottom) skinBottom = y;
-            }
-          }
-        }
-        const darkRatio = darkPx / totalPx;
-        let lengthLabel;
-        const faceDetected = skinCount > totalPx * 0.015;
-        if (faceDetected) {
-          const faceHeight = Math.max(1, skinBottom - skinTop);
-          const hairExtension = Math.max(0, lastDarkRow - skinBottom);
-          const heightsBeyondChin = hairExtension / faceHeight;
-          if (heightsBeyondChin < 0.15)      lengthLabel = 'Short';
-          else if (heightsBeyondChin < 1.0)  lengthLabel = 'Medium';
-          else if (heightsBeyondChin < 2.5)  lengthLabel = 'Long';
-          else                               lengthLabel = 'Extra Long';
-        } else {
-          const lengthRatio = lastDarkRow / H;
-          if (lengthRatio < 0.40)      lengthLabel = 'Short';
-          else if (lengthRatio < 0.60) lengthLabel = 'Medium';
-          else if (lengthRatio < 0.80) lengthLabel = 'Long';
-          else                         lengthLabel = 'Extra Long';
-        }
-        let densityLabel;
-        if (darkRatio < 0.18)      densityLabel = 'Fine';
-        else if (darkRatio < 0.32) densityLabel = 'Medium';
-        else                       densityLabel = 'Thick';
-        resolve({ contentClass:'ok_hair', subject:'woman', objectName:'', lengthLabel, densityLabel, faceVisible: faceDetected, confidence: 'low', source: 'local', allowed: true });
-      };
-      img.src = dataUrl;
-    });
   }
 
   const STAGES = [
@@ -918,6 +904,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const adj = calcAdjustments();
     $('fLength').textContent = a.lengthLabel;
     $('fDensity').textContent = a.densityLabel;
+    $('fTotal').textContent = fmt(calcTotal());
     $('fOzRow').style.display = hasColor() ? 'flex' : 'none';
     $('fOz').textContent = adj.extraOz === 0 ? 'None needed' : `+${adj.extraOz} oz · ${fmt(adj.extraCost)}`;
     if (adj.timeBased) {
@@ -933,12 +920,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     } else if (a.cached) {
       badge.textContent = '✦ Saved result · same photo, same quote';
       badge.className = 'ai-badge cached';
-    } else if (a.source === 'ai') {
+    } else {
       badge.textContent = '✦ AI scan · ' + (a.confidence || 'high') + ' confidence';
       badge.className = 'ai-badge vision';
-    } else {
-      badge.textContent = 'Local detection · low accuracy';
-      badge.className = 'ai-badge local';
     }
     const note = $('aiNote');
     if (a.manuallyEdited) note.textContent = '';
@@ -1025,11 +1009,41 @@ document.addEventListener('DOMContentLoaded', async function() {
     return { title: "Final <em>warning</em>", body: "This is the second time inappropriate content has been uploaded from this device. Please understand — this is a tool for booking professional hair services, and we need to keep it that way. <strong>One more inappropriate upload and access to this tool will be permanently revoked from this device.</strong>", icon: "!" };
   }
 
+  // The scan is off when the site has no DeepSeek key (or DeepSeek turns the
+  // key down): then nothing is scanned and no estimate is made, and the
+  // services and photo steps say to call or text instead.
+  function setScanOff() {
+    scanOff = true;
+    $('appRoot').classList.add('scan-is-off');
+    $('nextBtn').disabled = !canAdvance();
+  }
+
+  const CALL_HOLLY = 'Call or text Holly at <a href="tel:+12109005003">(210) 900-5003</a> for a quote.';
+  function showScanError(code) {
+    state.analysis = null;
+    if (code === 'no_key' || code === 'bad_key') {
+      setScanOff();
+      showGentleStop({ title: 'The photo scan is off', body: "The AI scan that reads your hair isn't switched on, so this page can't make an estimate. " + CALL_HOLLY, icon: '!', kind: 'warn', retry: 'none' });
+    } else if (code === 'limit') {
+      showGentleStop({ title: 'That’s the scans for this hour', body: 'This device has used its 10 scans for the hour. Try again later, or ' + CALL_HOLLY.charAt(0).toLowerCase() + CALL_HOLLY.slice(1), icon: '!', retry: 'none' });
+    } else if (code === 'busy') {
+      showGentleStop({ title: 'The scan is full for today', body: "Today's scans are used up. Try again tomorrow, or " + CALL_HOLLY.charAt(0).toLowerCase() + CALL_HOLLY.slice(1), icon: '!', retry: 'none' });
+    } else {
+      showGentleStop({ title: "The scan didn't finish", body: "Your photo couldn't be read this time. Check your connection and try again.", icon: '!', retry: 'rescan' });
+    }
+  }
+
   function showGentleStop(opts) {
     const panel = $('gentleStop');
     panel.classList.remove('cheeky', 'warn');
     if (opts.kind) panel.classList.add(opts.kind);
     $('gentleStopIcon').textContent = opts.icon || 'i';
+    // The first button: choose another photo (default), scan the same photo
+    // again ('rescan', after a scan that didn't finish), or none.
+    const retry = $('gentleStopRetry');
+    retry.dataset.mode = opts.retry || 'photo';
+    retry.textContent = opts.retry === 'rescan' ? 'Try again' : 'Try a different photo';
+    retry.style.display = opts.retry === 'none' ? 'none' : '';
     $('gentleStopTitle').innerHTML = opts.title || 'A little <em>note from us</em>';
     $('gentleStopBody').innerHTML = opts.body || '';
     panel.style.display = 'block';
@@ -1050,6 +1064,11 @@ document.addEventListener('DOMContentLoaded', async function() {
   }
 
   $('gentleStopRetry').addEventListener('click', () => {
+    if ($('gentleStopRetry').dataset.mode === 'rescan') {
+      $('gentleStop').style.display = 'none';
+      runAnalysis();
+      return;
+    }
     state.photo = null; state.photoHash = null; state.analysis = null;
     $('preview').classList.remove('shown');
     $('photoOptions').style.display = 'grid';
@@ -1088,6 +1107,8 @@ document.addEventListener('DOMContentLoaded', async function() {
       return;
     }
 
+    if (scanOff) { showScanError('no_key'); return; }
+
     if (state.photo) $('analyzeImg').src = state.photo;
     $('analyzeStage').style.display = 'flex';
     $('findings').style.display = 'none';
@@ -1108,16 +1129,16 @@ document.addEventListener('DOMContentLoaded', async function() {
       return;
     }
 
-    const analysisPromise = (async () => {
-      try { return await analyzeWithAI(state.photo); }
-      catch (err) {
-        console.warn('AI scan failed, using on-device detection:', err);
-        return await analyzeLocally(state.photo);
-      }
-    })();
-
+    // DeepSeek's scan or nothing: a scan that fails says so, with no guess
+    // made on the device in its place.
+    const analysisPromise = analyzeWithAI(state.photo).catch(err => err);
     const animationPromise = runAnimation(STAGES);
     const [analysis] = await Promise.all([analysisPromise, animationPromise]);
+    if (analysis instanceof Error) {
+      console.warn(analysis);
+      showScanError(analysis.code);
+      return;
+    }
     state.analysis = analysis;
 
     if (analysis.source === 'ai' && analysis.contentClass) {
@@ -1309,6 +1330,15 @@ document.addEventListener('DOMContentLoaded', async function() {
   });
 
   renderCards(SERVICES, $('services'), state.services);
+
+  // Is there a DeepSeek key on the site? An empty request answers 503
+  // "no_key" without one, and 400 "image" with one; it's turned down before
+  // anything reaches DeepSeek or counts toward the scan limits. A key that
+  // DeepSeek refuses only shows up at a real scan (502 "bad_key").
+  fetch(SCAN_URL, { method: 'POST', headers: { 'content-type': 'text/plain' }, body: '{}' })
+    .then(r => r.status === 503 ? r.json() : null)
+    .then(j => { if (j && j.error === 'no_key') setScanOff(); })
+    .catch(() => {});
 });
 </script>
 </body>
