@@ -305,7 +305,7 @@
             <div class="ai-badge" id="aiBadge"></div>
             <div class="finding-row"><span>Estimated length</span><span id="fLength">—</span></div>
             <div class="finding-row"><span>Density / thickness</span><span id="fDensity">—</span></div>
-            <div class="finding-row"><span>Extra color needed</span><span id="fOz">—</span></div>
+            <div class="finding-row" id="fOzRow"><span>Extra color needed</span><span id="fOz">—</span></div>
             <div class="finding-row" id="fTimeRow"><span>Time-based adjustment</span><span id="fTime">—</span></div>
             <div class="ai-note" id="aiNote"></div>
 
@@ -595,6 +595,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     { id:'short-glaze', name:'Short Hair Clear Glaze + Cut',   desc:'Clear shine glaze + finished haircut',                   price:130 },
     { id:'shine',       name:'Clear All-Over Glaze for Shine', desc:'High-gloss shine treatment',                             price:65 },
     { id:'fashion',     name:'Highlights with Fashion Color',  desc:'Highlights + fashion shade · base 3.5 hr · extra by length', price:250, timeBased:true },
+    { id:'brazilian',   name:'Brazilian Blowout',              desc:'Frizz-smoothing treatment · priced by length',          price:200, byLength:{ 'Short':200, 'Medium':200, 'Long':250, 'Extra Long':300 }, noColor:true },
     { id:'correct',     name:'Color Correction',               desc:'Charged at $150 per hour',                               price:150, unit:'/hr' },
   ];
 
@@ -652,6 +653,20 @@ document.addEventListener('DOMContentLoaded', async function() {
   }
 
 
+  // A service's price for this hair. The Brazilian Blowout goes by length:
+  // to the shoulders $200, to mid-back $250, past mid-back $300. The rest
+  // have one starting price.
+  function priceOf(s) {
+    const a = state.analysis;
+    return (s.byLength && a && s.byLength[a.lengthLabel]) || s.price;
+  }
+  // Extra color only makes sense with a color service (not a blowout alone).
+  function hasColor() {
+    return Array.from(state.services).some(id => {
+      const s = SERVICES.find(x => x.id === id);
+      return s && !s.noColor;
+    });
+  }
   function hasTimeBased() {
     return Array.from(state.services).some(id => {
       const s = SERVICES.find(x => x.id === id);
@@ -659,7 +674,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
   }
   function calcAdjustments() {
-    if (!state.analysis) return { extraOz:0, timeHours:0, extraCost:0, timeCost:0, total:0 };
+    if (!state.analysis || !hasColor()) return { extraOz:0, timeHours:0, extraCost:0, timeCost:0, total:0 };
     const a = state.analysis;
     const lengthOz   = { 'Short':0, 'Medium':1, 'Long':2, 'Extra Long':3 }[a.lengthLabel] || 0;
     const densityOz  = { 'Fine':0, 'Medium':1, 'Thick':2 }[a.densityLabel] || 0;
@@ -694,7 +709,7 @@ document.addEventListener('DOMContentLoaded', async function() {
   }
   function calcSubtotal() {
     let sub = 0;
-    state.services.forEach(id => sub += SERVICES.find(s => s.id===id).price);
+    state.services.forEach(id => sub += priceOf(SERVICES.find(s => s.id===id)));
     return sub;
   }
   function calcTotal() { return calcSubtotal() + calcAdjustments().total; }
@@ -1003,6 +1018,7 @@ Err on the side of caution: between "inappropriate" and "explicit", choose "inap
     const adj = calcAdjustments();
     $('fLength').textContent = a.lengthLabel;
     $('fDensity').textContent = a.densityLabel;
+    $('fOzRow').style.display = hasColor() ? 'flex' : 'none';
     $('fOz').textContent = adj.extraOz === 0 ? 'None needed' : `+${adj.extraOz} oz · ${fmt(adj.extraCost)}`;
     if (adj.timeBased) {
       $('fTimeRow').style.display = 'flex';
@@ -1295,9 +1311,9 @@ Err on the side of caution: between "inappropriate" and "explicit", choose "inap
       html += `<div class="line">
         <div class="line-main">
           <div class="line-name">${s.name}</div>
-          <div class="line-desc">${s.desc}</div>
+          <div class="line-desc">${s.byLength && a ? `Priced for ${lengthLower} hair` : s.desc}</div>
         </div>
-        <div class="line-price">${fmt(s.price)}${s.unit||''}</div>
+        <div class="line-price">${fmt(priceOf(s))}${s.unit||''}</div>
       </div>`;
     });
     html += '</div>';
@@ -1337,7 +1353,7 @@ Err on the side of caution: between "inappropriate" and "explicit", choose "inap
     const lines = [];
     state.services.forEach(id => {
       const s = SERVICES.find(x => x.id === id);
-      lines.push(`• ${s.name}: ${fmt(s.price)}${s.unit||''}`);
+      lines.push(`• ${s.name}: ${fmt(priceOf(s))}${s.unit||''}`);
     });
     if (adj.extraCost > 0) lines.push(`• Extra color · ${adj.extraOz} oz: +${fmt(adj.extraCost)}`);
     if (adj.timeCost > 0)  lines.push(`• Extra time · ${fmtHr(adj.timeHours)} hr @ $${HOURLY}/hr: +${fmt(adj.timeCost)}`);
