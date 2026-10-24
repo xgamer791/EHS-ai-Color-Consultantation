@@ -28,52 +28,23 @@
   ::selection{background:var(--ivory);color:var(--ink)}
   .app{min-height:100vh;padding-bottom:calc(96px + env(safe-area-inset-bottom))}
 
-  /* Top bar: the site's logo, a way back, settings */
+  /* Top bar: the site's logo and a way back */
   .topbar{border-bottom:1.5px solid var(--line)}
   .topbar-inner{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px var(--pad)}
   .topbar-logo img{height:40px;width:auto}
   .topbar-right{display:flex;align-items:center;gap:16px}
   .topbar-back{font-size:.875rem;font-weight:700;text-decoration:none;text-underline-offset:.2em}
   .topbar-back:hover{text-decoration:underline}
-  .settings-btn{width:44px;height:44px;display:flex;align-items:center;justify-content:center;border:1.5px solid var(--line);transition:border-color .2s}
-  .settings-btn:hover{border-color:var(--ivory)}
-  .settings-btn svg{width:20px;height:20px}
 
-  /* Intro */
-  .intro{padding:48px var(--pad) 40px}
+  /* The progress bar over the steps (the intro's headline and line under it
+     were taken out, 2026-10-24: too much text before the first step) */
+  .intro{padding:24px var(--pad)}
   .intro-grid{display:grid;gap:24px}
-  .brand-title{font-family:var(--f-display);font-weight:400;text-transform:uppercase;font-size:clamp(3rem,14vw,4.5rem);line-height:.9;letter-spacing:-.005em}
-  .brand-title em{font-family:var(--f-serif);font-weight:600;text-transform:none;letter-spacing:0}
-  .brand-sub{font-size:1.0625rem;color:var(--mute);max-width:52ch}
-  .progress{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:8px}
+  .progress{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
   .progress span{padding-top:12px;border-top:3px solid var(--line);font-size:.6875rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:border-color .4s,color .4s}
   .progress span.done{border-top-color:rgba(245,242,239,.6)}
   .progress span.active{border-top-color:var(--ivory);color:var(--ivory)}
-  /* After step 1 the intro shrinks to the progress bar, so each step opens in view */
-  .app:not([data-step="1"]) .brand-title,.app:not([data-step="1"]) .brand-sub{display:none}
-  .app:not([data-step="1"]) .intro{padding-top:24px;padding-bottom:24px}
-  .app:not([data-step="1"]) .progress{margin-top:0}
-
-  /* Settings */
-  .settings-panel{display:none;padding:40px var(--pad);border-top:1.5px solid var(--line);animation:fadeUp .3s var(--ease) both}
-  .settings-panel.shown{display:block}
-  .settings-grid{display:grid;gap:24px}
-  .settings-title{font-family:var(--f-display);font-weight:400;text-transform:uppercase;font-size:1.75rem;line-height:1;margin-bottom:12px}
-  .settings-desc{font-size:.9375rem;color:var(--mute);max-width:52ch}
-  .settings-label{display:block;font-size:.8125rem;font-weight:700;margin-bottom:8px}
-  .key-status{display:none;font-size:.8125rem;font-weight:700;margin-bottom:12px}
-  .key-status.shown{display:block}
-  .settings-input{display:block;width:100%;height:52px;padding:0 16px;border:1.5px solid var(--line);border-radius:0;background:var(--ink);font-size:1rem;margin-bottom:12px;-webkit-appearance:none;appearance:none}
-  .settings-input:focus{outline:none;border-color:var(--ivory)}
-  .settings-actions{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:12px}
-  .settings-divider{border:0;border-top:1.5px solid var(--line);margin:24px 0}
-  .settings-hint{font-size:.8125rem;color:var(--mute);line-height:1.5}
-  .settings-hint a{color:var(--ivory);text-underline-offset:.2em}
-  .settings-status{display:none;margin-top:12px;padding:12px 16px;border:1.5px solid var(--line);font-size:.875rem}
-  .settings-status.shown{display:block}
-  .settings-status.success::before{content:'\2713  '}
-  .settings-status.error{border-color:var(--ivory)}
-  .settings-status.error::before{content:'\26A0  '}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 
   /* Steps */
   .step{display:none;padding:48px var(--pad);border-top:1.5px solid var(--line)}
@@ -206,11 +177,11 @@
   .disclaimer{max-width:62ch;margin-top:24px;font-size:.8125rem;color:var(--mute);line-height:1.55}
 
   /* Buttons: one square style, as on the site */
-  button.btn,.gentle-stop-actions button,.settings-action{display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 24px;border:1.5px solid var(--ivory);border-radius:0;font-size:.8125rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;transition:background .2s,color .2s,border-color .2s}
-  button.btn-primary,.gentle-stop-actions .primary,.settings-action.save{background:var(--ivory);color:var(--ink)}
-  button.btn-primary:hover:not(:disabled),.gentle-stop-actions .primary:hover,.settings-action.save:hover{background:#fff;border-color:#fff}
-  button.btn-ghost,.gentle-stop-actions .ghost,.settings-action.clear{border-color:var(--line);color:var(--ivory)}
-  button.btn-ghost:hover,.gentle-stop-actions .ghost:hover,.settings-action.clear:hover{border-color:var(--ivory)}
+  button.btn,.gentle-stop-actions button{display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 24px;border:1.5px solid var(--ivory);border-radius:0;font-size:.8125rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;transition:background .2s,color .2s,border-color .2s}
+  button.btn-primary,.gentle-stop-actions .primary{background:var(--ivory);color:var(--ink)}
+  button.btn-primary:hover:not(:disabled),.gentle-stop-actions .primary:hover{background:#fff;border-color:#fff}
+  button.btn-ghost,.gentle-stop-actions .ghost{border-color:var(--line);color:var(--ivory)}
+  button.btn-ghost:hover,.gentle-stop-actions .ghost:hover{border-color:var(--ivory)}
   button.btn-primary:disabled{background:transparent;border-color:var(--line);color:var(--mute);cursor:not-allowed}
 
   /* The bar along the bottom */
@@ -221,18 +192,15 @@
 
   @media (min-width:1024px){
     .topbar-logo img{height:48px}
-    .intro{padding:80px var(--pad) 64px}
-    .intro-grid,.step-grid,.settings-grid,.nav-inner{grid-template-columns:minmax(0,5fr) minmax(0,7fr);column-gap:64px}
+    .intro-grid,.step-grid,.nav-inner{grid-template-columns:minmax(0,5fr) minmax(0,7fr);column-gap:64px}
     .intro-grid{align-items:end}
-    .brand-title{font-size:clamp(4.5rem,7.6vw,9rem)}
     .intro-side{display:flex;flex-direction:column;gap:24px}
-    .settings-panel{padding:64px var(--pad)}
     .step{padding:80px var(--pad) 96px}
     .step-head{position:sticky;top:32px;align-self:start}
     .photo-option{padding:64px 24px}
     .nav-inner{display:grid}
     .nav-buttons{grid-column:2}
-    .app:not([data-step="1"]) .intro-side{grid-column:2}
+    .intro-side{grid-column:2}
   }
   @media (prefers-reduced-motion:reduce){
     *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
@@ -249,9 +217,6 @@
       </a>
       <div class="topbar-right">
         <a class="topbar-back" href="https://envyhairstudiotx.com/">Back to the site</a>
-        <button type="button" class="settings-btn" id="settingsBtn" aria-label="Settings">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        </button>
       </div>
     </div>
   </header>
@@ -259,40 +224,14 @@
   <main class="main">
     <section class="intro">
       <div class="intro-grid">
-        <h1 class="brand-title">Your color, <em>quoted.</em></h1>
+        <h1 class="sr-only">Envy Hair Studio color consultation</h1>
         <div class="intro-side">
-          <p class="brand-sub">Pick your services, add a photo of your hair, and see what your color will cost before you call or text.</p>
           <div class="progress" id="progress" aria-hidden="true">
             <span class="active">Services</span><span>Photo</span><span>Analysis</span><span>Quote</span>
           </div>
         </div>
       </div>
     </section>
-
-    <div class="settings-panel" id="settingsPanel">
-      <div class="settings-grid">
-        <div>
-          <h2 class="settings-title">AI vision settings</h2>
-          <p class="settings-desc">Add an Anthropic API key to turn on AI hair analysis. The key is stored only on this device and sent straight to Anthropic.</p>
-        </div>
-        <div>
-          <div class="key-status" id="keyStatus"></div>
-          <label class="settings-label" for="apiKeyInput">Anthropic API key</label>
-          <input type="text" class="settings-input" id="apiKeyInput" placeholder="sk-ant-..." autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
-          <div class="settings-actions">
-            <button type="button" class="settings-action save" id="saveKeyBtn">Save key</button>
-            <button type="button" class="settings-action clear" id="clearKeyBtn">Clear</button>
-          </div>
-          <p class="settings-hint">No key? Get one at <a href="https://console.anthropic.com" target="_blank" rel="noopener">console.anthropic.com</a>. About $0.012 per analysis (Sonnet 4.5).</p>
-          <hr class="settings-divider">
-          <div class="settings-actions">
-            <button type="button" class="settings-action clear" id="clearCacheBtn">Clear saved photo results</button>
-          </div>
-          <p class="settings-hint">Only needed if you want photos you've already scanned to be analyzed again.</p>
-          <div class="settings-status" id="settingsStatus" role="status"></div>
-        </div>
-      </div>
-    </div>
 
     <section class="step active" data-step="1">
       <div class="step-grid">
@@ -715,49 +654,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     return 0;
   }
 
-  function refreshKeyStatus() {
-    const stored = localStorage.getItem(KEY_STORAGE);
-    const el = $('keyStatus');
-    if (stored && stored.length > 8) {
-      el.textContent = '✓ Key saved · ends in ' + stored.slice(-4);
-      el.classList.add('shown');
-    } else { el.textContent = ''; el.classList.remove('shown'); }
-  }
-
-  $('settingsBtn').addEventListener('click', () => {
-    const panel = $('settingsPanel');
-    panel.classList.toggle('shown');
-    if (panel.classList.contains('shown')) {
-      $('apiKeyInput').value = '';
-      $('settingsStatus').classList.remove('shown');
-      refreshKeyStatus();
-    }
-  });
-  $('saveKeyBtn').addEventListener('click', () => {
-    const val = $('apiKeyInput').value.trim();
-    const status = $('settingsStatus');
-    if (!val) { status.textContent = 'Paste your API key in the field above.'; status.className = 'settings-status shown error'; return; }
-    if (!val.startsWith('sk-ant-')) { status.textContent = 'Anthropic keys start with "sk-ant-".'; status.className = 'settings-status shown error'; return; }
-    localStorage.setItem(KEY_STORAGE, val);
-    status.textContent = '✓ Key saved on this device.';
-    status.className = 'settings-status shown success';
-    $('apiKeyInput').value = '';
-    refreshKeyStatus();
-  });
-  $('clearKeyBtn').addEventListener('click', () => {
-    localStorage.removeItem(KEY_STORAGE);
-    $('apiKeyInput').value = '';
-    const status = $('settingsStatus');
-    status.textContent = 'Key cleared. Falling back to local detection.';
-    status.className = 'settings-status shown success';
-    refreshKeyStatus();
-  });
-  $('clearCacheBtn').addEventListener('click', () => {
-    clearCache();
-    const status = $('settingsStatus');
-    status.textContent = '✓ Saved photo results cleared. Next scan will re-analyze.';
-    status.className = 'settings-status shown success';
-  });
 
   function hasTimeBased() {
     return Array.from(state.services).some(id => {
@@ -1136,7 +1032,6 @@ Err on the side of caution: between "inappropriate" and "explicit", choose "inap
     const note = $('aiNote');
     if (a.manuallyEdited) note.textContent = '';
     else if (a.notes) note.textContent = '"' + a.notes + '"';
-    else if (a.source === 'local') note.textContent = 'Add an Anthropic API key in Settings (⚙) for accurate AI vision analysis.';
     else note.textContent = '';
   }
 
